@@ -7,14 +7,12 @@ from sqlalchemy import (
     TIMESTAMP,
     PrimaryKeyConstraint,
 )
-from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-from .Base import Base
+from sqlalchemy.orm import relationship
+from models.Base import Base
 
 
 class DimUser(Base):
     """tabela dim_user"""
-
     __tablename__ = "dim_user"
 
     id = Column(Integer, primary_key=True)
@@ -32,7 +30,6 @@ class DimUser(Base):
 
 class DimTag(Base):
     """tabela dim_tag"""
-
     __tablename__ = "dim_tag"
 
     id = Column(Integer, primary_key=True)
@@ -45,7 +42,6 @@ class DimTag(Base):
 
 class DimStatus(Base):
     """tabela dim_status"""
-
     __tablename__ = "dim_status"
 
     id = Column(Integer, primary_key=True)
@@ -57,7 +53,6 @@ class DimStatus(Base):
 
 class DimRole(Base):
     """tabela dim_role"""
-
     __tablename__ = "dim_role"
 
     id = Column(Integer, primary_key=True)
@@ -69,7 +64,6 @@ class DimRole(Base):
 
 class DimProject(Base):
     """tabela dim_project"""
-
     __tablename__ = "dim_project"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -86,6 +80,7 @@ class DimProject(Base):
 
 
 class FatoCard(Base):
+    """tabela fato_card"""
     __tablename__ = "fato_card"
     __table_args__ = (
         PrimaryKeyConstraint(
