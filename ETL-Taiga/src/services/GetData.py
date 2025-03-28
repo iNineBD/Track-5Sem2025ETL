@@ -27,3 +27,16 @@ def fetch_data(endpoint):
             return f"Erro ao fazer a requisição: {response.status_code} - {response.text}"
     else:
         return f"Erro ao fazer a requisição: {response.status_code} - {response.text}"
+
+# %%
+
+def pipeline_projets():
+    """pipeline para gerar dataframes de projetos"""
+    projects = fetch_data("projects")
+    # selecionando apenas os projetos que são da empresa
+    campos = ['id', 'name', 'description', 'created_date', 'modified_date']
+    projects = pd.DataFrame(projects)[campos]
+    return projects
+
+# Executando a pipeline
+df_projects = pipeline_projets()
