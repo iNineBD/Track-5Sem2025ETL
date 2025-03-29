@@ -79,8 +79,30 @@ def pipeline_users(roles):
 
     return df_users_input
 
+# %%
+# pipeline para gerar dataframes de tags
+def pipeline_tags():
+    """pipeline para gerar dataframes de user stories"""
+    user_stories = fetch_data("userstories")
+    campos = ['id', 'tags']
+    # fazer a pipeline para users stories
+    # salve = pd.DataFrame(user_stories)
+
+    # pipeline tags de user stories
+    tags = pd.DataFrame(user_stories)[campos]
+    tags = tags.explode('tags').reset_index(drop=True)
+    tags[['name', 'color']] = tags['tags'].apply(pd.Series)
+    tags = tags.drop(columns=['tags'])
+    tags = tags.rename(columns={'id': 'id_card'})
+    tags.loc[tags['name'].notna() & tags['color'].isna(), 'color'] = '#a9aabc'
+    tags.dropna(inplace=True)
+    tags['color'] = tags['color'].str.upper()
+    tags['id'] = tags.index + 1
+
+    return tags
+# %%
 # Executando a pipeline
 df_projects = pipeline_projets()
-df_users,df_roles = pipeline_users()
 df_roles = pipeline_roles()
 df_users = pipeline_users(df_roles)
+df_tags= pipeline_tags()
