@@ -27,7 +27,6 @@ class DimUser(Base):
     # relacionamento com fato_card
     fato_cards = relationship("FatoCard", back_populates="dim_user")
 
-
 class DimTag(Base):
     """tabela dim_tag"""
     __tablename__ = "dim_tag"
@@ -71,9 +70,6 @@ class DimProject(Base):
     name = Column(String(200), nullable=False)
     created_date = Column(TIMESTAMP, nullable=False)
     modified_date = Column(TIMESTAMP, nullable=False)
-    finish_date = Column(TIMESTAMP, nullable=False)
-    logo_big_url = Column(String(999), nullable=False)
-    logo_small_url = Column(String(999), nullable=False)
 
     # relacionamento com fato_card
     fato_cards = relationship("FatoCard", back_populates="dim_project")

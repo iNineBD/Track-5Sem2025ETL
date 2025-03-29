@@ -1,10 +1,11 @@
+# %%
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 from sqlalchemy.schema import MetaData
 from sqlalchemy.exc import SQLAlchemyError
-
+# %%
 def conectar_banco():
 
     load_dotenv()
@@ -16,6 +17,7 @@ def conectar_banco():
     try:
         engine = create_engine(db_url, echo=True)
         Session = sessionmaker(bind=engine)
+
         session = Session()
 
         from models import (
@@ -38,5 +40,6 @@ def conectar_banco():
         print(f"erro ao conectar ou consultar o banco: {e}")
         raise
 
+# %%
 
 session = conectar_banco()

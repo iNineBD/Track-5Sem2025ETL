@@ -27,41 +27,60 @@ def fetch_data(endpoint):
             return f"Erro ao fazer a requisição: {response.status_code} - {response.text}"
     else:
         return f"Erro ao fazer a requisição: {response.status_code} - {response.text}"
-
 # %%
-
+# pipeline para gerar dataframes de projetos
 def pipeline_projets():
     """pipeline para gerar dataframes de projetos"""
     projects = fetch_data("projects")
     # selecionando apenas os projetos que são da empresa
     campos = ['id', 'name', 'description', 'created_date', 'modified_date']
-    projects = pd.DataFrame(projects)[campos]
+    projects = pd.DataFrame(projects)[campos].reset_index(drop=True)
     return projects
 
-def pipeline_users():
-    """pipeline para gerar dataframes de users"""
+# %%
+def pipeline_roles():
+    """pipeline para gerar dataframes de roles"""
+    roles = fetch_data("roles")
+    campos = ['id', 'name']
+    roles = pd.DataFrame(roles)[campos]
+    # remover as duplicadas
+    roles = roles.drop_duplicates(subset=['name'], keep='first').reset_index(drop=True)
+    # resetar o index da coluna id
+    roles['id'] = roles.index + 1
+
+    return roles
+
+# %%
+# pipeline para gerar dataframes de users
+def pipeline_users(roles):
+    """Pipeline para gerar dataframes de users com fk_id_role"""
     users = fetch_data("users")
-    campos = ['id','full_name_display','color']
+    campos = ['id', 'full_name_display', 'color']
 
-    list_roles = []
+    df_users_input = pd.DataFrame(users)[campos]
+
+    # dict para mapear nome da role
+    role_map = dict(zip(roles["name"], roles["id"]))
+
+    # lista com maps de id_user e role
+    user_role_map = {}
+
     for user in users:
-        user_id = user.get("id")
-        roles = user.get("roles", [])
+        user_id = user['id']
+        user_roles = user.get("roles", [])
 
-        if isinstance(roles, list):
-            for role in roles:
-                if isinstance(role, dict):
-                    role_copy = role.copy()
-                    role_copy["user_id"] = user_id
-                    list_roles.append(role_copy)
-                else:
-                    list_roles.append({"user_id": user_id,"role_name": role})
+        for role_name in user_roles:
+            if role_name in role_map:
+                user_role_map[user_id] = role_map[role_name]
+                break
 
-    users = pd.DataFrame(users)[campos]
-    roles = pd.DataFrame(list_roles) if list_roles else None
+    # Criar a coluna fk_id_role no df_users
+    df_users_input["fk_id_role"] = df_users_input["id"].map(user_role_map).fillna(0).astype(int)
 
-    return users, roles
+    return df_users_input
 
 # Executando a pipeline
 df_projects = pipeline_projets()
 df_users,df_roles = pipeline_users()
+df_roles = pipeline_roles()
+df_users = pipeline_users(df_roles)
