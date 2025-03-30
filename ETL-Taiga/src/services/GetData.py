@@ -99,9 +99,25 @@ def pipeline_tags():
     tags['id'] = tags.index + 1
 
     return tags
+
+# %%
+# pipeline para gerar dataframes de status
+def pipeline_status():
+    """pipeline para gerar dataframes de status"""
+    status = fetch_data("userstories")
+    campos = ['id', 'status_extra_info','project']
+
+    status = pd.DataFrame(status)[campos]
+    status['name'] = status['status_extra_info'].apply(lambda x: x['name'])
+    status = status.drop(columns=['status_extra_info'])
+    status = status.rename(columns={'id': 'id_card','project': 'id_project'})
+    status['id'] = status.index + 1
+    return status
+
 # %%
 # Executando a pipeline
 df_projects = pipeline_projets()
 df_roles = pipeline_roles()
 df_users = pipeline_users(df_roles)
 df_tags= pipeline_tags()
+df_status = pipeline_status()
