@@ -8,7 +8,7 @@ from sqlalchemy import (
     PrimaryKeyConstraint,
 )
 from sqlalchemy.orm import relationship
-from models.Base import Base
+from db.Connection import Base
 
 class DimUser(Base):
     """tabela dim_user"""
@@ -17,7 +17,6 @@ class DimUser(Base):
     id = Column(Integer, primary_key=True)
     full_name = Column(String(200), nullable=False)
     color = Column(String(200), nullable=False)
-    email = Column(String(200), unique=True, nullable=False)
     fk_id_role = Column(Integer, ForeignKey("dim_role.id", ondelete="SET NULL"))
     extend_existing = True
 
