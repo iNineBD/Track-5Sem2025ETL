@@ -26,10 +26,8 @@ jobs:
 
       - name: Lint with pylint
         run: |
-          pip install pylint
           pylint src
 
       - name: Run tests
         run: |
-          pip install pytest
           pytest
