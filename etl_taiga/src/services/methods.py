@@ -2,8 +2,8 @@
 Methods module for database operations.
 """
 
-from sqlalchemy.orm import Session
-from ETL_Taiga.models import (
+from sqlalchemy.orm import sessionmaker
+from etl_taiga.models import (
     FatoCard,
     DimUser,
     DimTag,
@@ -11,15 +11,15 @@ from ETL_Taiga.models import (
     DimRole,
     DimProject,
 )
-from ETL_Taiga.src.services.Auth import auth_taiga
-from ETL_Taiga.db.Connection import conectar_banco
+from etl_taiga.src.services.Auth.auth_taiga import Auth
+from etl_taiga.db.Connection import Connection
 
 
 def get_auth():
     """
     Authenticate with Taiga and return the token.
     """
-    auth = auth_taiga()
+    auth = Auth()
     if not auth:
         raise ValueError("Erro ao autenticar no Taiga")
     return auth
@@ -29,11 +29,11 @@ def get_session():
     """
     Return the database session.
     """
-    session = conectar_banco()
+    session = Connection()
     return session
 
 
-def reset_database(session: Session):
+def reset_database(session: sessionmaker):
     """
     Reset the database by deleting all records.
     """

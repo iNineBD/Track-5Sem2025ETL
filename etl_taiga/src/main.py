@@ -2,8 +2,8 @@
 Main module for the ETL pipeline.
 """
 
-from ETL_Taiga.db.Connection import conectar_banco
-from ETL_Taiga.src.services.GetData import (
+from etl_taiga.db.Connection import conectar_banco
+from etl_taiga.src.services.GetData import (
     pipeline_projets,
     pipeline_roles,
     pipeline_users,
@@ -11,7 +11,7 @@ from ETL_Taiga.src.services.GetData import (
     pipeline_status,
     pipeline_fact_cards,
 )
-from ETL_Taiga.src.services.Methods import reset_database, insert_data
+from etl_taiga.src.services.Methods import reset_database, insert_data
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
         # Chama a função para inserir os novos dados
         insert_data(session, projetos, roles, users, tags, status, fact_cards)
 
-    except Exception as error:
+    except Exception as error:  # Replace with the specific exception type
         print(f"Ocorreu um erro na execução: {error}")
 
     finally:

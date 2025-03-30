@@ -2,15 +2,14 @@
 Module for data extraction and transformation.
 """
 
-import requests
-import pandas as pd
-from ETL_Taiga.src.services.Auth import auth_taiga
 import numpy as np
+import pandas as pd
+from etl_taiga.src.services.Auth.auth_taiga import Auth
 
 TAIGA_HOST = "http://209.38.145.133:9000/"
 TAIGA_USER = "taiga-admin"
 TAIGA_PASSWORD = "admin"
-TOKEN = auth_taiga()
+TOKEN = Auth()
 
 
 def fetch_data(endpoint):
