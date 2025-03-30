@@ -1,9 +1,7 @@
 # %%
 import requests
-import json
 import pandas as pd
 from src.services.Auth import auth_taiga
-from taiga import TaigaAPI
 # %%
 taiga_host = 'http://209.38.145.133:9000/'
 taiga_user = 'taiga-admin'
@@ -84,7 +82,8 @@ def pipeline_users(roles):
 def pipeline_tags():
     """pipeline para gerar dataframes de user stories"""
     user_stories = fetch_data("userstories")
-    campos = ['id', 'tags']
+    campos = ['id', 'tags', 'project']
+
     # fazer a pipeline para users stories
     # salve = pd.DataFrame(user_stories)
 
@@ -93,7 +92,7 @@ def pipeline_tags():
     tags = tags.explode('tags').reset_index(drop=True)
     tags[['name', 'color']] = tags['tags'].apply(pd.Series)
     tags = tags.drop(columns=['tags'])
-    tags = tags.rename(columns={'id': 'id_card'})
+    tags = tags.rename(columns={'id': 'id_card','project': 'id_project'})
     tags.loc[tags['name'].notna() & tags['color'].isna(), 'color'] = '#a9aabc'
     tags.dropna(inplace=True)
     tags['color'] = tags['color'].str.upper()
