@@ -10,7 +10,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from models.Base import Base
 
-
 class DimUser(Base):
     """tabela dim_user"""
     __tablename__ = "dim_user"
@@ -20,6 +19,7 @@ class DimUser(Base):
     color = Column(String(200), nullable=False)
     email = Column(String(200), unique=True, nullable=False)
     fk_id_role = Column(Integer, ForeignKey("dim_role.id", ondelete="SET NULL"))
+    extend_existing = True
 
     # relacionamento com dim_role
     role = relationship("DimRole", back_populates="users")
@@ -34,6 +34,9 @@ class DimTag(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(200), nullable=False)
     color = Column(String(100), nullable=False)
+    id_card = Column(Integer, nullable=True)
+    id_project = Column(Integer, nullable=True)
+    extend_existing = True
 
     # relacionamento com fato_card
     fato_cards = relationship("FatoCard", back_populates="dim_tag")
@@ -45,6 +48,9 @@ class DimStatus(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(200), nullable=False)
+    id_card = Column(Integer, nullable=True)
+    id_project = Column(Integer, nullable=True)
+    extend_existing = True
 
     # Relacionamento com fato_card
     fato_cards = relationship("FatoCard", back_populates="dim_status")
@@ -56,6 +62,7 @@ class DimRole(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
+    extend_existing = True
 
     # relacionamento com dim_user
     users = relationship("DimUser", back_populates="role")
@@ -70,6 +77,7 @@ class DimProject(Base):
     name = Column(String(200), nullable=False)
     created_date = Column(TIMESTAMP, nullable=False)
     modified_date = Column(TIMESTAMP, nullable=False)
+    extend_existing = True
 
     # relacionamento com fato_card
     fato_cards = relationship("FatoCard", back_populates="dim_project")
@@ -89,6 +97,7 @@ class FatoCard(Base):
     fk_id_tag = Column(Integer, ForeignKey("dim_tag.id", ondelete="CASCADE"))
     fk_id_user = Column(Integer, ForeignKey("dim_user.id", ondelete="CASCADE"))
     fk_id_project = Column(Integer, ForeignKey("dim_project.id", ondelete="CASCADE"))
+    extend_existing = True
 
     # relacionamento com as tabelas dimensionais
     dim_status = relationship("DimStatus", back_populates="fato_cards")

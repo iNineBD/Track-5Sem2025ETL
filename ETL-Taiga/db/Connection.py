@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 def conectar_banco():
 
     load_dotenv()
-    db_url = os.getenv("DATABASE_URL")
+    db_url = "postgresql://admin:admin@209.38.145.133:5432/dw_track"
     if not db_url:
         raise ValueError("A variável de ambiente 'DATABASE_URL' não está definida!")
     metadata = MetaData(schema="dw_track")
@@ -32,7 +32,7 @@ def conectar_banco():
 
         Base.metadata.create_all(engine)
 
-        statuses = session.query(FatoCard).all()
+        statuses = session.query(DimProject).all()
         print(f"🔍 Registros encontrados em DimProject: {len(statuses)}")
         return session
 
@@ -41,5 +41,4 @@ def conectar_banco():
         raise
 
 # %%
-
 session = conectar_banco()
