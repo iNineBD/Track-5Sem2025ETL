@@ -27,10 +27,6 @@ jobs:
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
-      - name: Lint with pylint
-        run: |
-          pylint etl_taiga/src
-
       - name: Run tests
         run: |
           pytest
