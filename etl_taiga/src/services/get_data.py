@@ -1,73 +1,68 @@
-# %%
-import requests
-import pandas as pd
-from src.services.Auth import auth_taiga
+"""
+Module for data extraction and transformation.
+"""
+
 import numpy as np
+import pandas as pd
+from etl_taiga.src.services.Auth.auth_taiga import Auth
 
-# %%
-taiga_host = "http://209.38.145.133:9000/"
-taiga_user = "taiga-admin"
-taiga_password = "admin"
-token = auth_taiga()
+TAIGA_HOST = "http://209.38.145.133:9000/"
+TAIGA_USER = "taiga-admin"
+TAIGA_PASSWORD = "admin"
+TOKEN = Auth()
 
 
-# %%
 def fetch_data(endpoint):
-    """faz a requisição get para a api do taiga e retorna o json"""
-    url = f"{taiga_host}/api/v1"
-    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+    """
+    Fetch data from the Taiga API.
+    """
+    url = f"{TAIGA_HOST}/api/v1"
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {TOKEN}"}
 
-    response = requests.get(f"{url}/{endpoint}", headers=headers)
+    response = requests.get(f"{url}/{endpoint}", headers=headers, timeout=10)
     if response.status_code == 200:
         try:
             data = response.json()
             return data if isinstance(data, list) else data["data"]
-        except requests.exceptions:
-            return (
-                f"Erro ao fazer a requisição: {response.status_code} - {response.text}"
-            )
+        except Exception:
+            return f"Erro ao fazer a requisição: {response.status_code} - {response.text}"
     else:
         return f"Erro ao fazer a requisição: {response.status_code} - {response.text}"
 
 
-# %%
-# pipeline para gerar dataframes de projetos
 def pipeline_projets():
-    """pipeline para gerar dataframes de projetos"""
+    """
+    Generate a DataFrame for projects.
+    """
     projects = fetch_data("projects")
-    # selecionando apenas os projetos que são da empresa
     campos = ["id", "name", "description", "created_date", "modified_date"]
     projects = pd.DataFrame(projects)[campos].reset_index(drop=True)
     return projects
 
 
-# %%
 def pipeline_roles():
-    """pipeline para gerar dataframes de roles"""
+    """
+    Generate a DataFrame for roles.
+    """
     roles = fetch_data("roles")
     campos = ["id", "name"]
     roles = pd.DataFrame(roles)[campos]
-    # remover as duplicadas
     roles = roles.drop_duplicates(subset=["name"], keep="first").reset_index(drop=True)
-    # resetar o index da coluna id
     roles["id"] = roles.index + 1
-
     return roles
 
 
-# %%
-# pipeline para gerar dataframes de users
 def pipeline_users(roles):
-    """Pipeline para gerar dataframes de users com fk_id_role"""
+    """
+    Generate a DataFrame for users with foreign key to roles.
+    """
     users = fetch_data("users")
     campos = ["id", "full_name_display", "color"]
 
     df_users_input = pd.DataFrame(users)[campos]
 
-    # dict para mapear nome da role
     role_map = dict(zip(roles["name"], roles["id"]))
 
-    # lista com maps de id_user e role
     user_role_map = {}
 
     for user in users:
@@ -79,27 +74,20 @@ def pipeline_users(roles):
                 user_role_map[user_id] = role_map[role_name]
                 break
 
-    # Criar a coluna fk_id_role no df_users
     df_users_input["fk_id_role"] = (
         df_users_input["id"].map(user_role_map).fillna(0).astype(int)
     )
-    # Renomear a coluna
     df_users_input = df_users_input.rename(columns={"full_name_display": "full_name"})
-
     return df_users_input
 
 
-# %%
-# pipeline para gerar dataframes de tags
 def pipeline_tags():
-    """pipeline para gerar dataframes de user stories"""
+    """
+    Generate a DataFrame for tags.
+    """
     user_stories = fetch_data("userstories")
     campos = ["id", "tags", "project"]
 
-    # fazer a pipeline para users stories
-    # salve = pd.DataFrame(user_stories)
-
-    # pipeline tags de user stories
     tags = pd.DataFrame(user_stories)[campos]
     tags = tags.explode("tags").reset_index(drop=True)
     tags[["name", "color"]] = tags["tags"].apply(pd.Series)
@@ -110,16 +98,14 @@ def pipeline_tags():
     tags["color"] = tags["color"].str.upper()
     tags = tags.reset_index(drop=True)
     tags["id"] = tags.index + 1
-
     return tags
 
 
-# %%
-# pipeline para gerar dataframes de status
 def pipeline_status():
-    """pipeline para gerar dataframes de status"""
+    """
+    Generate a DataFrame for status.
+    """
     status = fetch_data("userstories")
-    salve = pd.DataFrame(status)
     campos = ["id", "status_extra_info", "project"]
 
     status = pd.DataFrame(status)[campos]
@@ -130,11 +116,10 @@ def pipeline_status():
     return status
 
 
-# %%
-
-
 def pipeline_fact_cards():
-    """pipeline para gerar dataframes de fato cards"""
+    """
+    Generate a DataFrame for fact cards.
+    """
     projects = pipeline_projets()
     roles = pipeline_roles()
     users = pipeline_users(roles)
@@ -144,7 +129,6 @@ def pipeline_fact_cards():
     cards = fetch_data("userstories")
     campos = ["project", "assigned_to"]
     df_cards = pd.DataFrame(cards)[campos]
-    salve = pd.DataFrame(df_cards)
     df_cards = df_cards.rename(
         columns={"assigned_to": "fk_id_user", "project": "fk_id_project"}
     )
@@ -160,7 +144,6 @@ def pipeline_fact_cards():
     df_cards["fk_id_status"] = id_status
     df_cards.drop(columns=["id_card"], inplace=True)
     df_cards = df_cards.rename(columns={"id": "fk_id_tag"})
-    # reordenando as colunas
     df_cards["fk_id_project"] = df_cards["id_project"]
     df_cards.drop(columns=["id_project"], inplace=True)
     df_cards = df_cards[
