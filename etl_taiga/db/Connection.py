@@ -18,7 +18,7 @@ Session = sessionmaker(bind=engine)
 session = None  # Variável global para a sessão
 
 # Importação dos modelos
-from models import (
+from ..models import (
     FatoCard,
     DimUser,
     DimTag,

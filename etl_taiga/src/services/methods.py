@@ -11,15 +11,15 @@ from etl_taiga.models import (
     DimRole,
     DimProject,
 )
-from etl_taiga.src.services.Auth.auth_taiga import Auth
-from etl_taiga.db.Connection import Connection
+from etl_taiga.src.services.auth import auth_taiga
+from etl_taiga.db import Connection
 
 
 def get_auth():
     """
     Authenticate with Taiga and return the token.
     """
-    auth = Auth()
+    auth = auth_taiga()
     if not auth:
         raise ValueError("Erro ao autenticar no Taiga")
     return auth
@@ -51,12 +51,11 @@ def reset_database(session: sessionmaker):
         print(f"Erro ao apagar dados: {error}")
 
 
-def insert_data(session, data):
+def insert_data(session, df_projects, df_roles, df_users, df_tags, df_status, df_fact_cards):
     """
     Insert data into the database.
     """
     try:
-        df_projects, df_roles, df_users, df_tags, df_status, df_fact_cards = data
 
         session.bulk_insert_mappings(DimProject, df_projects.to_dict(orient="records"))
         session.bulk_insert_mappings(DimRole, df_roles.to_dict(orient="records"))

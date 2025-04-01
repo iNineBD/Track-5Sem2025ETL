@@ -4,12 +4,13 @@ Module for data extraction and transformation.
 
 import numpy as np
 import pandas as pd
-from etl_taiga.src.services.Auth.auth_taiga import Auth
+import requests
+from etl_taiga.src.services.auth import auth_taiga
 
 TAIGA_HOST = "http://209.38.145.133:9000/"
 TAIGA_USER = "taiga-admin"
 TAIGA_PASSWORD = "admin"
-TOKEN = Auth()
+TOKEN = auth_taiga()
 
 
 def fetch_data(endpoint):
@@ -61,22 +62,20 @@ def pipeline_users(roles):
 
     df_users_input = pd.DataFrame(users)[campos]
 
-    role_map = dict(zip(roles["name"], roles["id"]))
+    # role_map = dict(zip(roles["name"], roles["id"]))
+    #
+    # user_role_map = {}
+    #
+    # for user in users:
+    #     user_id = user["id"]
+    #     user_roles = user.get("roles", [])
+    #
+    #     for role_name in user_roles:
+    #         if role_name in role_map:
+    #             user_role_map[user_id] = role_map[role_name]
+    #             break
 
-    user_role_map = {}
-
-    for user in users:
-        user_id = user["id"]
-        user_roles = user.get("roles", [])
-
-        for role_name in user_roles:
-            if role_name in role_map:
-                user_role_map[user_id] = role_map[role_name]
-                break
-
-    df_users_input["fk_id_role"] = (
-        df_users_input["id"].map(user_role_map).fillna(0).astype(int)
-    )
+    df_users_input["fk_id_role"] = df_users_input.index + 1
     df_users_input = df_users_input.rename(columns={"full_name_display": "full_name"})
     return df_users_input
 

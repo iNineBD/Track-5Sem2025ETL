@@ -1,9 +1,10 @@
 """
 Main module for the ETL pipeline.
 """
+#!/usr/bin/env python3
 
 from etl_taiga.db.Connection import conectar_banco
-from etl_taiga.src.services.GetData import (
+from services.get_data import (
     pipeline_projets,
     pipeline_roles,
     pipeline_users,
@@ -11,7 +12,7 @@ from etl_taiga.src.services.GetData import (
     pipeline_status,
     pipeline_fact_cards,
 )
-from etl_taiga.src.services.Methods import reset_database, insert_data
+from services.methods import reset_database, insert_data
 
 
 def main():
