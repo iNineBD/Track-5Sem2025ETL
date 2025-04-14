@@ -12,12 +12,9 @@ TAIGA_DB = os.getenv("TAIGA_DB")
 DB_SCHEMA = os.getenv("DB_SCHEMA")
 
 db = PostgresqlDatabase(
-    TAIGA_DB,
-    user=TAIGA_USER,
-    password=TAIGA_PASSWORD,
-    host=TAIGA_HOST,
-    port=TAIGA_PORT
+    TAIGA_DB, user=TAIGA_USER, password=TAIGA_PASSWORD, host=TAIGA_HOST, port=TAIGA_PORT
 )
+
 
 class BaseModel(Model):
     class Meta:

@@ -51,7 +51,9 @@ def reset_database(session: sessionmaker):
         print(f"Erro ao apagar dados: {error}")
 
 
-def insert_data(session, df_projects, df_roles, df_users, df_tags, df_status, df_fact_cards):
+def insert_data(
+    session, df_projects, df_roles, df_users, df_tags, df_status, df_fact_cards
+):
     """
     Insert data into the database.
     """
