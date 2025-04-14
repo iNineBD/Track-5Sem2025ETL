@@ -71,9 +71,9 @@ class DimProject(Base):
     """tabela dim_project"""
     __tablename__ = "dim_project"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    description = Column(String(999), nullable=False)
-    name = Column(String(200), nullable=False)
+    id_project = Column(Integer, primary_key=True, autoincrement=True)
+    project_description = Column(String(999), nullable=False)
+    project_name = Column(String(200), nullable=False)
     created_date = Column(TIMESTAMP, nullable=False)
     modified_date = Column(TIMESTAMP, nullable=False)
     extend_existing = True
@@ -95,7 +95,7 @@ class FatoCard(Base):
     fk_id_status = Column(Integer, ForeignKey("dim_status.id", ondelete="CASCADE"))
     fk_id_tag = Column(Integer, ForeignKey("dim_tag.id", ondelete="CASCADE"))
     fk_id_user = Column(Integer, ForeignKey("dim_user.id", ondelete="CASCADE"))
-    fk_id_project = Column(Integer, ForeignKey("dim_project.id", ondelete="CASCADE"))
+    fk_id_project = Column(Integer, ForeignKey("dim_project.id_project", ondelete="CASCADE"))
     extend_existing = True
 
     # relacionamento com as tabelas dimensionais
