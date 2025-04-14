@@ -1,18 +1,24 @@
 """
 Module for data extraction and transformation.
 """
-
+import os
 import numpy as np
 import pandas as pd
 import requests
-from etl_taiga.src.services.auth import auth_taiga
+from sqlalchemy.dialects.mssql.information_schema import columns
 
-TAIGA_HOST = "http://209.38.145.133:9000/"
-TAIGA_USER = "taiga-admin"
-TAIGA_PASSWORD = "admin"
+from etl_taiga.src.services.auth import auth_taiga, TAIGA_HOST
+from dotenv import load_dotenv
+# %%
+
+load_dotenv()
+
+TAIGA_HOST = os.getenv("TAIGA_HOST")
+TAIGA_USER = os.getenv("TAIGA_USER")
+TAIGA_PASSWORD = os.getenv("TAIGA_PASSWORD")
 TOKEN = auth_taiga()
 
-
+# %%
 def fetch_data(endpoint):
     """
     Fetch data from the Taiga API.
@@ -38,6 +44,7 @@ def pipeline_projets():
     projects = fetch_data("projects")
     campos = ["id", "name", "description", "created_date", "modified_date"]
     projects = pd.DataFrame(projects)[campos].reset_index(drop=True)
+    projects = projects.rename(columns={"id": "id_project", "name": "project_name","description": "project_description"})
     return projects
 
 

@@ -10,10 +10,12 @@ from sqlalchemy.exc import SQLAlchemyError
 load_dotenv()
 
 # Configuração do banco
-db_url = "postgresql://admin:admin@209.38.145.133:5432/dw_track"
-metadata = MetaData(schema="dw_track")
+DB_URL = os.getenv("DB_URL")
+DB_SCHEMA = os.getenv("DB_SCHEMA")
+# %%
+metadata = MetaData(schema=DB_SCHEMA)
 Base = declarative_base(metadata=metadata)
-engine = create_engine(db_url, echo=True)
+engine = create_engine(DB_URL, echo=True)
 Session = sessionmaker(bind=engine)
 session = None  # Variável global para a sessão
 
