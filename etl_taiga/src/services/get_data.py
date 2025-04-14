@@ -1,14 +1,14 @@
 """
 Module for data extraction and transformation.
 """
+
 import os
 import numpy as np
 import pandas as pd
 import requests
-from sqlalchemy.dialects.mssql.information_schema import columns
-
-from etl_taiga.src.services.auth import auth_taiga, TAIGA_HOST
+from etl_taiga.src.services.auth import auth_taiga
 from dotenv import load_dotenv
+
 # %%
 
 load_dotenv()
@@ -16,25 +16,24 @@ load_dotenv()
 TAIGA_HOST = os.getenv("TAIGA_HOST")
 TAIGA_USER = os.getenv("TAIGA_USER")
 TAIGA_PASSWORD = os.getenv("TAIGA_PASSWORD")
+TAIGA_MEMBER = os.getenv("TAIGA_MEMBER")
 TOKEN = auth_taiga()
+
 
 # %%
 def fetch_data(endpoint):
     """
-    Fetch data from the Taiga API.
+    Busca dados da API do Taiga no endpoint especificado.
     """
-    url = f"{TAIGA_HOST}/api/v1"
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {TOKEN}"}
+    url = f"{TAIGA_HOST}/{endpoint}?member={TAIGA_MEMBER}"
 
-    response = requests.get(f"{url}/{endpoint}", headers=headers, timeout=10)
-    if response.status_code == 200:
-        try:
-            data = response.json()
-            return data if isinstance(data, list) else data["data"]
-        except Exception:
-            return f"Erro ao fazer a requisição: {response.status_code} - {response.text}"
-    else:
-        return f"Erro ao fazer a requisição: {response.status_code} - {response.text}"
+    response = requests.get(url, headers=headers, timeout=10)
+    response.raise_for_status()
+    return response.json()
+
+
+# %%
 
 
 def pipeline_projets():
@@ -43,9 +42,15 @@ def pipeline_projets():
     """
     projects = fetch_data("projects")
     campos = ["id", "name", "description", "created_date", "modified_date"]
-    projects = pd.DataFrame(projects)[campos].reset_index(drop=True)
-    projects = projects.rename(columns={"id": "id_project", "name": "project_name","description": "project_description"})
-    return projects
+    df_projects = pd.DataFrame(projects)[campos].reset_index(drop=True)
+    df_projects = df_projects.rename(
+        columns={
+            "id": "id_project",
+            "name": "project_name",
+            "description": "project_description",
+        }
+    )
+    return df_projects
 
 
 def pipeline_roles():
@@ -157,3 +162,12 @@ def pipeline_fact_cards():
     ]
     df_cards = df_cards.astype(int)
     return df_cards
+
+
+# %%
+df_projects = pipeline_projets()
+df_roles = pipeline_roles()
+df_users = pipeline_users(df_roles)
+df_tags = pipeline_tags()
+df_status = pipeline_status()
+df_fact_cards = pipeline_fact_cards()

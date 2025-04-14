@@ -1,6 +1,7 @@
 """
 Main module for the ETL pipeline.
 """
+
 #!/usr/bin/env python3
 
 from etl_taiga.db.Connection import conectar_banco
