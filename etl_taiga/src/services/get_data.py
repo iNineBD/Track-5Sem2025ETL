@@ -21,36 +21,33 @@ TOKEN = auth_taiga()
 
 
 # %%
-def fetch_data(endpoint):
-    """
-    Busca dados da API do Taiga no endpoint especificado.
-    """
-    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {TOKEN}"}
-    url = f"{TAIGA_HOST}/{endpoint}?member={TAIGA_MEMBER}"
-
-    response = requests.get(url, headers=headers, timeout=10)
-    response.raise_for_status()
-    return response.json()
-
-
-# %%
-
-
 def pipeline_projets():
     """
     Generate a DataFrame for projects.
     """
-    projects = fetch_data("projects")
-    campos = ["id", "name", "description", "created_date", "modified_date"]
+
+    def fetch_data_projects():
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {TOKEN}",
+        }
+        url = f"{TAIGA_HOST}/projects?member={TAIGA_MEMBER}"
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        return response.json()
+
+    projects = fetch_data_projects()
+    campos = ["id", "name", "description"]
     df_projects = pd.DataFrame(projects)[campos].reset_index(drop=True)
-    df_projects = df_projects.rename(
+    df_projects.rename(
         columns={
             "id": "id_project",
             "name": "project_name",
-            "description": "project_description",
+            "description": "description",
         }
     )
-    return df_projects
+    ids_projects = df_projects["id"].tolist()
+    return df_projects, ids_projects
 
 
 def pipeline_roles():
