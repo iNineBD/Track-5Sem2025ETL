@@ -50,15 +50,36 @@ def pipeline_projets():
     return df_projects, ids_projects
 
 
+# %%
 def pipeline_roles():
     """
     Generate a DataFrame for roles.
     """
-    roles = fetch_data("roles")
+    _, list_id_projects = pipeline_projets()
+
+    def fetch_data_roles():
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {TOKEN}",
+        }
+        all_roles = []
+
+        for (
+            project_id
+        ) in list_id_projects:  # Fetch roles for the first project in the li
+            url = f"{TAIGA_HOST}/roles?project={project_id}"
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            roles = response.json()
+            all_roles.extend(roles)
+
+        return all_roles
+
+    roles = fetch_data_roles()
+
     campos = ["id", "name"]
     roles = pd.DataFrame(roles)[campos]
-    roles = roles.drop_duplicates(subset=["name"], keep="first").reset_index(drop=True)
-    roles["id"] = roles.index + 1
+    roles = roles.rename(columns={"id": "id_role", "name": "name_role"})
     return roles
 
 
