@@ -19,20 +19,19 @@ TAIGA_PASSWORD = os.getenv("TAIGA_PASSWORD")
 TAIGA_MEMBER = os.getenv("TAIGA_MEMBER")
 TOKEN = auth_taiga()
 
+headers = {"Content-Type": "application/json","Authorization": f"Bearer {TOKEN}"}
+url_projects = f"{TAIGA_HOST}/projects?member={TAIGA_MEMBER}"
+url_roles = f"{TAIGA_HOST}/roles?project="
+url_cards = f"{TAIGA_HOST}/userstories?project="
+url_cards_full = f"{TAIGA_HOST}/userstories/"
 
 # %%
 def pipeline_projets():
     """
     Generate a DataFrame for projects.
     """
-
     def fetch_data_projects():
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {TOKEN}",
-        }
-        url = f"{TAIGA_HOST}/projects?member={TAIGA_MEMBER}"
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url_projects, headers=headers, timeout=10)
         response.raise_for_status()
         return response.json()
 
@@ -49,136 +48,37 @@ def pipeline_projets():
     ids_projects = df_projects["id"].tolist()
     return df_projects, ids_projects
 
+_,ids_projects = pipeline_projets()
 
-# %%
-def pipeline_roles():
+
+def pipeline_cards(id_projects):
     """
-    Generate a DataFrame for roles.
+    Generate a DataFrame for cards.
     """
-    _, list_id_projects = pipeline_projets()
+    id_cards = []
+    # coletar os ids das users stories por projeto
+    for (project_id) in id_projects:
+        response = requests.get(f"{url_cards}{project_id}", headers=headers, timeout=10)
+        response.raise_for_status()
+        cards = pd.DataFrame(response.json())
+        id_cards.append(cards["id"].tolist())
 
-    def fetch_data_roles():
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {TOKEN}",
-        }
-        all_roles = []
+    # unir os ids das users stories
+    id_cards = list(np.concatenate(id_cards))
 
-        for (
-            project_id
-        ) in list_id_projects:  # Fetch roles for the first project in the li
-            url = f"{TAIGA_HOST}/roles?project={project_id}"
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            roles = response.json()
-            all_roles.extend(roles)
+    df_cards = pd.DataFrame(columns=["project", "assigned_to", "subject", "tags", "description", "created_date", "status"])
 
-        return all_roles
+    for card_id in id_cards:
+        response = requests.get(f"{url_cards_full}{card_id}", headers=headers, timeout=10)
+        response.raise_for_status()
+        card_data = response.json()
 
-    roles = fetch_data_roles()
+        filtered_data = {campo: card_data.get(campo, None) for campo in df_cards.columns}
+        df_temp = pd.DataFrame([filtered_data])
 
-    campos = ["id", "name"]
-    roles = pd.DataFrame(roles)[campos]
-    roles = roles.rename(columns={"id": "id_role", "name": "name_role"})
-    return roles
+        if not df_temp.empty:
+            df_cards = pd.concat([df_cards, df_temp], ignore_index=True)
 
-
-def pipeline_users(roles):
-    """
-    Generate a DataFrame for users with foreign key to roles.
-    """
-    users = fetch_data("users")
-    campos = ["id", "full_name_display", "color"]
-
-    df_users_input = pd.DataFrame(users)[campos]
-
-    # role_map = dict(zip(roles["name"], roles["id"]))
-    #
-    # user_role_map = {}
-    #
-    # for user in users:
-    #     user_id = user["id"]
-    #     user_roles = user.get("roles", [])
-    #
-    #     for role_name in user_roles:
-    #         if role_name in role_map:
-    #             user_role_map[user_id] = role_map[role_name]
-    #             break
-
-    df_users_input["fk_id_role"] = df_users_input.index + 1
-    df_users_input = df_users_input.rename(columns={"full_name_display": "full_name"})
-    return df_users_input
-
-
-def pipeline_tags():
-    """
-    Generate a DataFrame for tags.
-    """
-    user_stories = fetch_data("userstories")
-    campos = ["id", "tags", "project"]
-
-    tags = pd.DataFrame(user_stories)[campos]
-    tags = tags.explode("tags").reset_index(drop=True)
-    tags[["name", "color"]] = tags["tags"].apply(pd.Series)
-    tags = tags.drop(columns=["tags"])
-    tags = tags.rename(columns={"id": "id_card", "project": "id_project"})
-    tags.loc[tags["name"].notna() & tags["color"].isna(), "color"] = "#a9aabc"
-    tags.dropna(inplace=True)
-    tags["color"] = tags["color"].str.upper()
-    tags = tags.reset_index(drop=True)
-    tags["id"] = tags.index + 1
-    return tags
-
-
-def pipeline_status():
-    """
-    Generate a DataFrame for status.
-    """
-    status = fetch_data("userstories")
-    campos = ["id", "status_extra_info", "project"]
-
-    status = pd.DataFrame(status)[campos]
-    status["name"] = status["status_extra_info"].apply(lambda x: x["name"])
-    status = status.drop(columns=["status_extra_info"])
-    status = status.rename(columns={"id": "id_card", "project": "id_project"})
-    status["id"] = status.index + 1
-    return status
-
-
-def pipeline_fact_cards():
-    """
-    Generate a DataFrame for fact cards.
-    """
-    projects = pipeline_projets()
-    roles = pipeline_roles()
-    users = pipeline_users(roles)
-    tags = pipeline_tags()
-    status = pipeline_status()
-
-    cards = fetch_data("userstories")
-    campos = ["project", "assigned_to"]
-    df_cards = pd.DataFrame(cards)[campos]
-    df_cards = df_cards.rename(
-        columns={"assigned_to": "fk_id_user", "project": "fk_id_project"}
-    )
-    df_cards["fk_id_status"] = status["id"]
-    df_cards["fk_id_tag"] = tags["id"]
-
-    count_df_status = status.groupby("name").size().reset_index(name="qtd_card")
-    id_user = df_cards["fk_id_user"]
-    id_status = df_cards["fk_id_status"]
-    df_cards = status.merge(count_df_status, on="name", how="left")
-    df_cards.drop(columns=["name"], inplace=True)
-    df_cards["fk_id_user"] = id_user
-    df_cards["fk_id_status"] = id_status
-    df_cards.drop(columns=["id_card"], inplace=True)
-    df_cards = df_cards.rename(columns={"id": "fk_id_tag"})
-    df_cards["fk_id_project"] = df_cards["id_project"]
-    df_cards.drop(columns=["id_project"], inplace=True)
-    df_cards = df_cards[
-        ["fk_id_status", "fk_id_tag", "fk_id_user", "fk_id_project", "qtd_card"]
-    ]
-    df_cards = df_cards.astype(int)
     return df_cards
 
 
