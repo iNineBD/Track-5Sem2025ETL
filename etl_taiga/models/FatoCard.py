@@ -105,4 +105,3 @@ class FatoCard(Base):
     dim_tag = relationship("DimTag", back_populates="fato_cards")
     dim_user = relationship("DimUser", back_populates="fato_cards")
     dim_project = relationship("DimProject", back_populates="fato_cards")
-    

@@ -27,6 +27,7 @@ engine = create_engine(db_url, echo=True)
 Session = sessionmaker(bind=engine)
 session = None  # Variável global para a sessão
 
+
 def conectar_banco():
     """Cria a conexão e inicializa o banco"""
     global session  # Usa a sessão global
