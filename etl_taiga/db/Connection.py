@@ -6,17 +6,6 @@ from dotenv import load_dotenv
 from sqlalchemy.schema import MetaData
 from sqlalchemy.exc import SQLAlchemyError
 
-# %%
-load_dotenv()
-
-# Configuração do banco
-db_url = "postgresql://admin:admin@209.38.145.133:5432/dw_track"
-metadata = MetaData(schema="dw_track")
-Base = declarative_base(metadata=metadata)
-engine = create_engine(db_url, echo=True)
-Session = sessionmaker(bind=engine)
-session = None  # Variável global para a sessão
-
 # Importação dos modelos
 from ..models import (
     FatoCard,
@@ -27,6 +16,16 @@ from ..models import (
     DimProject,
 )
 
+# %%
+load_dotenv()
+
+# Configuração do banco
+db_url = "postgresql://admin:admin@209.38.145.133:5432/dw_track"
+metadata = MetaData(schema="dw_track")
+Base = declarative_base(metadata=metadata)
+engine = create_engine(db_url, echo=True)
+Session = sessionmaker(bind=engine)
+session = None  # Variável global para a sessão
 
 def conectar_banco():
     """Cria a conexão e inicializa o banco"""

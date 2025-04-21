@@ -10,6 +10,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from etl_taiga.db.Connection import Base
 
+
 class DimUser(Base):
     """tabela dim_user"""
     __tablename__ = "dim_user"
@@ -25,6 +26,7 @@ class DimUser(Base):
 
     # relacionamento com fato_card
     fato_cards = relationship("FatoCard", back_populates="dim_user")
+
 
 class DimTag(Base):
     """tabela dim_tag"""
@@ -103,3 +105,4 @@ class FatoCard(Base):
     dim_tag = relationship("DimTag", back_populates="fato_cards")
     dim_user = relationship("DimUser", back_populates="fato_cards")
     dim_project = relationship("DimProject", back_populates="fato_cards")
+    
