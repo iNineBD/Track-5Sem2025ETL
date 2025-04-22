@@ -34,13 +34,6 @@ class FatoCard(BaseModel):
         backref="fatos_criados",
         on_delete="CASCADE",
     )
-    id_time_finished = ForeignKeyField(
-        DimTime,
-        column_name="id_time_finished",
-        backref="fatos_finalizados",
-        null=True,
-        on_delete="CASCADE",
-    )
 
     id_tag = ForeignKeyField(
         DimTag, column_name="id_tag", backref="fatos", null=True, on_delete="CASCADE"
