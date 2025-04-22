@@ -8,6 +8,7 @@ import pandas as pd
 import requests
 from etl_taiga.src.services.auth import auth_taiga
 from dotenv import load_dotenv
+import gc
 
 # %%
 
@@ -19,17 +20,16 @@ TAIGA_PASSWORD = os.getenv("TAIGA_PASSWORD")
 TAIGA_MEMBER = os.getenv("TAIGA_MEMBER")
 TOKEN = auth_taiga()
 
-headers = {"Content-Type": "application/json","Authorization": f"Bearer {TOKEN}"}
-url_projects = f"{TAIGA_HOST}/projects?member={TAIGA_MEMBER}"
-url_roles = f"{TAIGA_HOST}/roles?project="
-url_cards = f"{TAIGA_HOST}/userstories?project="
-url_cards_full = f"{TAIGA_HOST}/userstories/"
+headers = {"Content-Type": "application/json", "Authorization": f"Bearer {TOKEN}"}
+
 
 # %%
 def pipeline_projets():
     """
     Generate a DataFrame for projects.
     """
+    url_projects = f"{TAIGA_HOST}/projects?member={TAIGA_MEMBER}"
+
     def fetch_data_projects():
         response = requests.get(url_projects, headers=headers, timeout=10)
         response.raise_for_status()
@@ -151,9 +151,54 @@ def pipeline_cards(id_projects):
 
 
 # %%
-df_projects = pipeline_projets()
-df_roles = pipeline_roles()
-df_users = pipeline_users(df_roles)
-df_tags = pipeline_tags()
-df_status = pipeline_status()
-df_fact_cards = pipeline_fact_cards()
+def pipeline_users(id_projects):
+    """
+    Generate a DataFrame for users.
+    """
+    url_users = f"{TAIGA_HOST}/memberships?page=1&project="
+
+    df_users = pd.DataFrame(
+        columns=["user", "project", "full_name", "role", "role_name", "user_email"]
+    )
+
+    for id_project in id_projects:
+        response = requests.get(f"{url_users}{id_project}", headers=headers, timeout=10)
+        response.raise_for_status()
+        users = response.json()
+
+        for user in users:
+            filtered_data = {campo: user.get(campo, None) for campo in df_users.columns}
+
+            df_temp = pd.DataFrame([filtered_data])
+            if not df_temp.empty:
+                df_users = pd.concat([df_users, df_temp], ignore_index=True)
+
+    df_users = df_users.rename(
+        columns={
+            "user": "id_user",
+            "project": "fk_id_project",
+            "full_name": "name_user",
+        }
+    )
+    df_roles = pd.DataFrame()
+    df_roles["id_role"] = df_users["role"]
+    df_roles["name_role"] = df_users["role_name"]
+    df_users["password"] = None
+    df_users.drop(columns=["role_name"], inplace=True)
+
+    return df_users, df_roles
+
+
+# %%
+
+
+def pipeline_main():
+    """
+    Main function to run the ETL pipeline.
+    """
+
+    df_projects, ids_projects = pipeline_projets()
+    df_cards, df_status, df_tags, id_users, df = pipeline_cards(ids_projects)
+    df_users, df_roles = pipeline_users(ids_projects)
+
+    return df_projects, df_cards, df_status, df_tags, df_users, df_roles, id_users, df
