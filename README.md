@@ -8,7 +8,7 @@ This ETL (Extract, Transform, Load) project is designed to process and manage da
 
 ## Prerequisites
 
-- Python 3.10 or 3.11
+- Python 3.10 or higher
 - PostgreSQL database
 - pip (Python Package Manager)
 
