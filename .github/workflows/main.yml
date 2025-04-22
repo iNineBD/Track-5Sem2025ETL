@@ -1,8 +1,6 @@
 name: Python ETL Workflow
 
 on:
-  push:
-    branches: [main, sprint-1, sprint-2, sprint-3]
   pull_request:
     branches: [main, sprint-1, sprint-2, sprint-3]
 

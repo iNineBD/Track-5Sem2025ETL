@@ -119,9 +119,9 @@ def pipeline_fact_cards():
     """
     Generate a DataFrame for fact cards.
     """
-    projects = pipeline_projets()
-    roles = pipeline_roles()
-    users = pipeline_users(roles)
+    # projects = pipeline_projets()
+    # roles = pipeline_roles()
+    # users = pipeline_users(roles)
     tags = pipeline_tags()
     status = pipeline_status()
 
