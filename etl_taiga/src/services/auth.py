@@ -23,9 +23,6 @@ def auth_taiga():
     """
     # Initialize the Taiga API client
     api = TaigaAPI()
-    api.auth(
-        username=TAIGA_USER,
-        password=TAIGA_PASSWORD
-    )
+    api.auth(username=TAIGA_USER, password=TAIGA_PASSWORD)
     token = api.token
     return token
