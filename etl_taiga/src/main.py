@@ -3,6 +3,7 @@
 # Importando a classe DBSessionManager da conexão do banco de dados
 from etl_taiga.db.Connection import DBSessionManager
 
+
 def main():
     # Criando uma instância da classe DBSessionManager
     db_session_manager = DBSessionManager()
@@ -15,6 +16,7 @@ def main():
         print("Conexão com o banco de dados estabelecida com sucesso!")
     else:
         print("Falha na conexão com o banco de dados.")
+
 
 if __name__ == "__main__":
     main()
@@ -68,4 +70,3 @@ def main():
 if __name__ == "__main__":
     main()
 '''
-

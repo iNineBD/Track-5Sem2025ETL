@@ -41,6 +41,7 @@ def test_pipeline_users(mock_fetch_data):
         {"id": 2, "full_name_display": "Maria", "color": "#abcdef"},
     ]
 
+
 def test_pipeline_tags(mock_fetch_data):
     mock_fetch_data.return_value = [
         {

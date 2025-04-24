@@ -1,6 +1,7 @@
 from unittest.mock import patch
 from etl_taiga.src.services.auth import auth_taiga
 
+
 @patch('etl_taiga.src.services.auth.requests.post')
 def test_auth_taiga_mockado(mock_post):
     # Simula a resposta da API do Taiga

@@ -12,7 +12,7 @@ def test_get_auth_success(mocker):
 
 
 def test_get_auth_failure(mocker):
-    mock_auth = mocker.patch("etl_taiga.src.services.methods.auth_taiga", return_value=None)
+    # mock_auth = mocker.patch("etl_taiga.src.services.methods.auth_taiga", return_value=None)
     with pytest.raises(ValueError, match="Erro ao autenticar no Taiga"):
         methods.get_auth()
 

@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 from unittest import mock
 import requests
 
+
 # ========================
 # Mock do DBSessionManager
 # ========================

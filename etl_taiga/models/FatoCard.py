@@ -12,7 +12,6 @@ from sqlalchemy.orm import relationship
 from etl_taiga.db.base import Base
 
 
-
 class DimUser(Base):
     """tabela dim_user"""
     __tablename__ = "dim_user"

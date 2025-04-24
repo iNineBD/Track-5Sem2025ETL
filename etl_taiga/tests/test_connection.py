@@ -3,6 +3,7 @@
 from unittest import mock
 from etl_taiga.db.Connection import DBSessionManager
 
+
 def test_conectar_banco_cria_sessao():
     # Mockando a função create_engine para que não se conecte ao banco de dados real
     with mock.patch('sqlalchemy.create_engine') as mock_create_engine:

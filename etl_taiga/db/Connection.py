@@ -5,17 +5,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 from sqlalchemy.schema import MetaData
 from sqlalchemy.exc import SQLAlchemyError
-from etl_taiga.db.base import Base
-
-''' # Importação dos modelos
-from ..models import (
-    FatoCard,
-    DimUser,
-    DimTag,
-    DimStatus,
-    DimRole,
-    DimProject,
-)'''
+# from etl_taiga.db.base import Base
 
 # %%
 load_dotenv()
