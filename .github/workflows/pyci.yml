@@ -17,9 +17,10 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.10" # Definindo a versão do Python para 3.10
+          cache: "pip" # Habilitando o cache do pip para acelerar as instalações de dependências
 
       - name: Install dependencies # Instalando o Flake8 para linting e pytest para testes
         run: |
