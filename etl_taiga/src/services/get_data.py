@@ -10,15 +10,19 @@ from etl_taiga.src.services.auth import auth_taiga
 TAIGA_HOST = "http://209.38.145.133:9000/"
 TAIGA_USER = "taiga-admin"
 TAIGA_PASSWORD = "admin"
-TOKEN = auth_taiga()
+#TOKEN = auth_taiga()
 
 
 def fetch_data(endpoint):
     """
     Fetch data from the Taiga API.
-    """
+    
     url = f"{TAIGA_HOST}/api/v1"
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {TOKEN}"}
+    """
+    token = auth_taiga()
+    url = f"{TAIGA_HOST}/api/v1"
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
 
     response = requests.get(f"{url}/{endpoint}", headers=headers, timeout=10)
     if response.status_code == 200:

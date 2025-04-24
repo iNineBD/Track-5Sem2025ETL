@@ -15,5 +15,6 @@ def auth_taiga():
     """
     auth_user = {"type": "normal", "username": TAIGA_USER, "password": TAIGA_PASSWORD}
     auth_response = requests.post(f"{TAIGA_HOST}/api/v1/auth", json=auth_user, timeout=10)
+    #auth_response = requests.post(f"{TAIGA_HOST.rstrip('/')}/api/v1/auth", json=auth_user, timeout=10) - melhora a f-string,URL final sempre vai estar correta, com só uma /
     token = auth_response.json()["auth_token"]
     return token

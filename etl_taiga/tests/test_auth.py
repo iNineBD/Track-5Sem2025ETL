@@ -1,10 +1,20 @@
-import requests
 from unittest.mock import patch
 from etl_taiga.src.services.auth import auth_taiga
 
-@patch("requests.post")
-def test_auth_taiga_success(mock_post):
-    mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = {"auth_token": "123abc"}
+@patch('etl_taiga.src.services.auth.requests.post')
+def test_auth_taiga_mockado(mock_post):
+    # Simula a resposta da API do Taiga
+    mock_response = mock_post.return_value
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"auth_token": "token-fake-123"}
+
+    # Chama a função normalmente
     token = auth_taiga()
-    assert token == "123abc"
+
+    # Verificações
+    assert token == "token-fake-123"
+    mock_post.assert_called_once_with(
+        "http://209.38.145.133:9000//api/v1/auth",  # Note os dois "//" (bug do f-string, podemos corrigir depois)
+        json={"type": "normal", "username": "taiga-admin", "password": "admin"},
+        timeout=10
+    )

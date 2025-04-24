@@ -1,9 +1,32 @@
+# etl_taiga/src/main.py
+
+# Importando a classe DBSessionManager da conexão do banco de dados
+from etl_taiga.db.Connection import DBSessionManager
+
+def main():
+    # Criando uma instância da classe DBSessionManager
+    db_session_manager = DBSessionManager()
+
+    # Chamando o método conectar_banco para inicializar a sessão do banco
+    sessao = db_session_manager.conectar_banco()
+
+    # Verificando se a sessão foi criada corretamente
+    if sessao:
+        print("Conexão com o banco de dados estabelecida com sucesso!")
+    else:
+        print("Falha na conexão com o banco de dados.")
+
+if __name__ == "__main__":
+    main()
+
+
+'''
 """
 Main module for the ETL pipeline.
 """
-# !/usr/bin/env python3
+#!/usr/bin/env python3
 
-from etl_taiga.db.Connection import conectar_banco
+from etl_taiga.db.Connection import DBSessionManager
 from services.get_data import (
     pipeline_projets,
     pipeline_roles,
@@ -44,3 +67,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+'''
+

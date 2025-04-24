@@ -8,7 +8,9 @@ from sqlalchemy import (
     PrimaryKeyConstraint,
 )
 from sqlalchemy.orm import relationship
-from etl_taiga.db.Connection import Base
+# from etl_taiga.db.Connection import Base
+from etl_taiga.db.base import Base
+
 
 
 class DimUser(Base):

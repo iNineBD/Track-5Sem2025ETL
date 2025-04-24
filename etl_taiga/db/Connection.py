@@ -5,8 +5,9 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 from sqlalchemy.schema import MetaData
 from sqlalchemy.exc import SQLAlchemyError
+from etl_taiga.db.base import Base
 
-# Importação dos modelos
+''' # Importação dos modelos
 from ..models import (
     FatoCard,
     DimUser,
@@ -14,7 +15,7 @@ from ..models import (
     DimStatus,
     DimRole,
     DimProject,
-)
+)'''
 
 # %%
 load_dotenv()
@@ -23,7 +24,7 @@ load_dotenv()
 db_url = "postgresql://admin:admin@209.38.145.133:5432/dw_track"
 metadata = MetaData(schema="dw_track")
 Base = declarative_base(metadata=metadata)
-engine = create_engine(db_url, echo=True)
+engine = create_engine(db_url, echo=True)   # Aqui estamos criando a engine real
 SessionLocal = sessionmaker(bind=engine)
 
 
