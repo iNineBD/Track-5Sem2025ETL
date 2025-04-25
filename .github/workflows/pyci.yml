@@ -31,18 +31,12 @@ jobs:
         run: |
           flake8 etl_taiga
 
-      - name: Dummy step with public action # Apenas para testes.
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: dummy-test
-
       - name: Run Pytest for Code Coverage and save to file # Rodando o PyTest apenas para gerar a cobertura de código e salvar em arquivo HTML
         run: |
           pytest --maxfail=1 --disable-warnings --cov=etl_taiga --cov-report=html:coverage_report
 
       - name: Upload coverage report # Fazendo upload do diretório de cobertura gerado
-        uses: actions/upload-artifact@v2.3.1
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage_report
