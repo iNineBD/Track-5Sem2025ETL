@@ -1,3 +1,4 @@
+# tests/test_auth.py
 from unittest.mock import patch
 from etl_taiga.services.auth import auth_taiga
 

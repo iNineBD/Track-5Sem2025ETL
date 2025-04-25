@@ -1,3 +1,4 @@
+# tests/test_main.py
 import unittest
 from etl_taiga import main
 from unittest.mock import patch, MagicMock
