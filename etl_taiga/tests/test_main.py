@@ -1,5 +1,5 @@
 import unittest
-from etl_taiga.src.main import main
+from etl_taiga import main
 from unittest.mock import patch, MagicMock
 
 

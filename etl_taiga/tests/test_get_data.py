@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch
 import pandas as pd
 
-from etl_taiga.src.services import get_data
+from etl_taiga.services import get_data
 
 
 @pytest.fixture

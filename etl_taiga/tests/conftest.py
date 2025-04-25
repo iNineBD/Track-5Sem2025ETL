@@ -22,7 +22,7 @@ def mock_db_session():
 @pytest.fixture
 def fake_auth_token(monkeypatch):
     """Mocka auth_taiga para evitar chamada real à API"""
-    from etl_taiga.src import services
+    from etl_taiga import services
     monkeypatch.setattr(services.auth, "auth_taiga", lambda: "fake-token")
     yield
 

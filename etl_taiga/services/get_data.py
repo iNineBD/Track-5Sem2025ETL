@@ -1,29 +1,36 @@
+# src/services/get_data.py
 """
 Module for data extraction and transformation.
 """
-
-import numpy as np
-import pandas as pd
 import requests
-from etl_taiga.src.services.auth import auth_taiga
+import pandas as pd
 
-TAIGA_HOST = "http://209.38.145.133:9000/"
-TAIGA_USER = "taiga-admin"
-TAIGA_PASSWORD = "admin"
-# TOKEN = auth_taiga()
+from ..config import TAIGA_HOST
+from etl_taiga.services.auth import auth_taiga
+
+_TOKEN = None
+
+
+def get_token():
+    global _TOKEN
+    if _TOKEN is None:
+        _TOKEN = auth_taiga()
+    return _TOKEN
 
 
 def fetch_data(endpoint):
-    '''
     """
     Fetch data from the Taiga API.
     """
+    global TOKEN
+    if not TOKEN:
+        TOKEN = auth_taiga()  # Lazy-load the token the first time it's needed
+
     url = f"{TAIGA_HOST}/api/v1"
-    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {TOKEN}"}
-    '''
-    token = auth_taiga()
-    url = f"{TAIGA_HOST}/api/v1"
-    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {get_token()}",
+    }
 
     response = requests.get(f"{url}/{endpoint}", headers=headers, timeout=10)
     if response.status_code == 200:
@@ -122,36 +129,37 @@ def pipeline_status():
 
 def pipeline_fact_cards():
     """
-    Generate a DataFrame for fact cards.
+    Gera um DataFrame para os fact cards, fazendo os merges estáveis com status, tags e outros dados necessários.
     """
-    # projects = pipeline_projets()
-    # roles = pipeline_roles()
-    # users = pipeline_users(roles)
-    tags = pipeline_tags()
-    status = pipeline_status()
+    # Etapa 1: Obter os dados de tags, status e userstories
+    tags = pipeline_tags()  # Dados sobre as tags
+    status = pipeline_status()  # Dados sobre o status
+    cards = fetch_data("userstories")  # Dados dos cards
 
-    cards = fetch_data("userstories")
-    campos = ["project", "assigned_to"]
-    df_cards = pd.DataFrame(cards)[campos]
-    df_cards = df_cards.rename(
-        columns={"assigned_to": "fk_id_user", "project": "fk_id_project"}
-    )
-    df_cards["fk_id_status"] = status["id"]
-    df_cards["fk_id_tag"] = tags["id"]
+    # Etapa 2: Preparação inicial dos dados de userstories
+    df_cards = pd.DataFrame(cards)[["project", "assigned_to"]]
+    df_cards = df_cards.rename(columns={"assigned_to": "fk_id_user", "project": "fk_id_project"})
 
-    count_df_status = status.groupby("name").size().reset_index(name="qtd_card")
-    id_user = df_cards["fk_id_user"]
-    id_status = df_cards["fk_id_status"]
-    df_cards = status.merge(count_df_status, on="name", how="left")
-    df_cards.drop(columns=["name"], inplace=True)
-    df_cards["fk_id_user"] = id_user
-    df_cards["fk_id_status"] = id_status
-    df_cards.drop(columns=["id_card"], inplace=True)
-    df_cards = df_cards.rename(columns={"id": "fk_id_tag"})
-    df_cards["fk_id_project"] = df_cards["id_project"]
-    df_cards.drop(columns=["id_project"], inplace=True)
-    df_cards = df_cards[
-        ["fk_id_status", "fk_id_tag", "fk_id_user", "fk_id_project", "qtd_card"]
-    ]
+    # Etapa 3: Adicionar quantidade de cards (qtd_card)
+    # Vamos assumir que a quantidade inicial de cards é 1 (você pode modificar isso se necessário)
+    df_cards["qtd_card"] = 1
+
+    # Etapa 4: Merge com as tags (relacionamento de id_tag)
+    df_tags = tags[["id", "id_project"]]
+    df_cards = df_cards.merge(df_tags, how="left", left_on="fk_id_project", right_on="id")
+    df_cards["fk_id_tag"] = df_cards["id"]
+    df_cards.drop(columns=["id"], inplace=True)
+
+    # Etapa 5: Merge com o status (relacionamento de id_status)
+    df_status = status[["id", "id_project"]]
+    df_cards = df_cards.merge(df_status, how="left", left_on="fk_id_project", right_on="id")
+    df_cards["fk_id_status"] = df_cards["id"]
+    df_cards.drop(columns=["id"], inplace=True)
+
+    # Etapa 6: Garantir que as colunas estão corretas e ajustar a estrutura
+    df_cards = df_cards[["fk_id_status", "fk_id_tag", "fk_id_user", "fk_id_project", "qtd_card"]]
+
+    # Etapa 7: Ajustar tipos das colunas
     df_cards = df_cards.astype(int)
+
     return df_cards

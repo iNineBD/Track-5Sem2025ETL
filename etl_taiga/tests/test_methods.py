@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
-from unittest.mock import MagicMock, patch
-from etl_taiga.src.services import methods
+from unittest.mock import MagicMock
+from etl_taiga.services import methods
 
 
 def test_get_auth_success(mocker):
@@ -12,7 +12,12 @@ def test_get_auth_success(mocker):
 
 
 def test_get_auth_failure(mocker):
-    # mock_auth = mocker.patch("etl_taiga.src.services.methods.auth_taiga", return_value=None)
+    mock_response = mocker.Mock()
+    mock_response.status_code = 401
+    mock_response.json.return_value = {"detail": "Invalid credentials"}
+
+    mocker.patch("etl_taiga.src.services.auth.requests.post", return_value=mock_response)
+
     with pytest.raises(ValueError, match="Erro ao autenticar no Taiga"):
         methods.get_auth()
 

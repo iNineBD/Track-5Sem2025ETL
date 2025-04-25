@@ -1,5 +1,5 @@
 from unittest.mock import patch
-from etl_taiga.src.services.auth import auth_taiga
+from etl_taiga.services.auth import auth_taiga
 
 
 @patch('etl_taiga.src.services.auth.requests.post')
@@ -15,7 +15,7 @@ def test_auth_taiga_mockado(mock_post):
     # Verificações
     assert token == "token-fake-123"
     mock_post.assert_called_once_with(
-        "http://209.38.145.133:9000//api/v1/auth",  # Note os dois "//" (bug do f-string, podemos corrigir depois)
+        "http://209.38.145.133:9000/api/v1/auth",  # Corrigido aqui
         json={"type": "normal", "username": "taiga-admin", "password": "admin"},
         timeout=10
     )
