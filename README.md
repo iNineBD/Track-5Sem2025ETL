@@ -37,10 +37,18 @@ After running the ETL pipeline, the processed data will be available in the Post
 
 ## Testing the Project
 
-Run the tests to ensure the project is functioning correctly:
+Run the tests to ensure that the project is working correctly:
+
+Runs the flake8 linter on the etl_taiga directory to check if the code follows Python style best practices (PEP8).
 
 ```bash
-pytest etl_taiga/tests/
+flake8 etl_taiga
+```
+
+Runs the tests and details the coverage in ```index.html``` in the "coverage_report" directory at the root of the project.
+
+```bash
+pytest --disable-warnings --cov=etl_taiga --cov-report=html:coverage_report --cov-report=xml:coverage_report/coverage.xml
 ```
 
 ## Additional Information
