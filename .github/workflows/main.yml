@@ -30,12 +30,15 @@ jobs:
       - name: Run tests with coverage
         run: |
           pytest --cov=etl_taiga --cov-report=xml
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=etl_taiga --cov-report=xml:coverage_report/coverage.xml
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: coverage.xml
+          path: coverage_report/coverage.xml
 
   sonarcloud-analysis:
     name: SonarCloud Analysis
@@ -59,7 +62,7 @@ jobs:
           args: >
             -Dsonar.projectKey=iNineBD_Track-5Sem2025Server
             -Dsonar.organization=ininetrack
-            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.python.coverage.reportPaths=coverage_report/coverage.xml
             -Dsonar.sources=etl_taiga
             -Dsonar.verbose=true
         env:

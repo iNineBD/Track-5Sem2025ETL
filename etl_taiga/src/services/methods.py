@@ -12,7 +12,7 @@ from etl_taiga.models import (
     DimRole,
     DimProject,
 )
-from etl_taiga.services.auth import auth_taiga
+from etl_taiga.src.services.auth import auth_taiga
 from etl_taiga.db import Connection
 
 

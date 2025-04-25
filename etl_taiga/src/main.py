@@ -1,12 +1,11 @@
-# main.py
+# src/main.py
 """
 Main module for the ETL pipeline.
 """
 # !/usr/bin/env python3
 
-from etl_taiga.db.Connection import DBSessionManager
-
-from etl_taiga.services.get_data import (
+from etl_taiga.db.Connection import conectar_banco
+from services.get_data import (
     pipeline_projets,
     pipeline_roles,
     pipeline_users,
@@ -14,16 +13,14 @@ from etl_taiga.services.get_data import (
     pipeline_status,
     pipeline_fact_cards,
 )
-from etl_taiga.services.methods import reset_database, insert_data
+from services.methods import reset_database, insert_data
 
 
 def main():
     """
     Main function to execute the ETL pipeline.
     """
-    db_manager = DBSessionManager()
-    session = db_manager.conectar_banco()
-
+    session = conectar_banco()
     projetos = pipeline_projets()
     roles = pipeline_roles()
     users = pipeline_users(roles)
