@@ -3,6 +3,7 @@ from unittest import mock
 from etl_taiga.db.Connection import DBSessionManager
 from sqlalchemy import create_engine
 
+
 @mock.patch('sqlalchemy.create_engine')  # Patch no create_engine do SQLAlchemy
 def test_conectar_banco_cria_sessao(mock_create_engine):
     # Simulando a engine de banco em memória (SQLite em memória)
