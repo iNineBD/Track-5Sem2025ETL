@@ -36,7 +36,7 @@ jobs:
           pytest --maxfail=1 --disable-warnings --cov=etl_taiga --cov-report=html:coverage_report # Salva o relatório de cobertura em 'coverage_report'
 
       - name: Upload coverage report # Fazendo upload do diretório de cobertura gerado
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: coverage-report
           path: coverage_report
