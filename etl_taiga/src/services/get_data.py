@@ -63,6 +63,7 @@ def pipeline_cards(id_projects):
     df_users = pd.DataFrame(columns=["id", "name", "email", "password", "id_role"])
     df_status = pd.DataFrame(columns=["status"])
     df_tags = pd.DataFrame(columns=["tags", "id"])
+    df_status = pd.DataFrame(columns=["id_status", "name_status"])
 
     tag_map = {}
     next_tag_id = 1
@@ -91,6 +92,7 @@ def pipeline_cards(id_projects):
                         next_tag_id += 1
                     tag_id = tag_map[tag_value]
 
+                name_status = card.get("status_extra_info")
                 # Extrair informações para df_cards
                 df_cards = pd.concat(
                     [
@@ -104,13 +106,28 @@ def pipeline_cards(id_projects):
                                     "subject": card.get("subject"),
                                     "description": card.get("description"),
                                     "created_date": card.get("created_date"),
-                                    "status": card.get("status"),
+                                    "status": name_status.get("name"),
                                     "project": project_id,
                                 }
                             ]
                         ),
                     ],
                     ignore_index=True,
+                )
+
+                # Extrair informações para df_tags
+                df_status = pd.concat(
+                    [
+                        df_status,
+                        pd.DataFrame(
+                            [
+                                {
+                                    "id_status": card.get("status"),
+                                    "name_status": name_status.get("name"),
+                                }
+                            ]
+                        ),
+                    ],
                 )
 
                 df_tags = pd.concat(
@@ -167,6 +184,7 @@ def pipeline_cards(id_projects):
         resp_status = response.json()
         # adicionar o nome do status
         df_status.loc[df_status["status"] == status, "name"] = resp_status.get("name")
+    df_status = df_status.drop_duplicates(subset="name_status").reset_index(drop=True)
 
     # extrair description de cards
     url_cards_full = f"{TAIGA_HOST}/userstories/"
