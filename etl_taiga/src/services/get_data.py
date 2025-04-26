@@ -60,7 +60,7 @@ def pipeline_cards(id_projects):
             "project",
         ]
     )
-    df_users = pd.DataFrame(columns=["id", "name", "email", "password", "id_role"])
+    df_users = pd.DataFrame(columns=["id", "name", "email", "password", "name_role"])
     df_status = pd.DataFrame(columns=["status"])
     df_tags = pd.DataFrame(columns=["tags", "id"])
     df_status = pd.DataFrame(columns=["id_status", "name_status"])
@@ -152,7 +152,6 @@ def pipeline_cards(id_projects):
                                     ),
                                     "email": assigned_to_extra_info.get("email"),
                                     "password": None,
-                                    "id_role": None,
                                 }
                             ]
                         ),
@@ -160,30 +159,9 @@ def pipeline_cards(id_projects):
                     ignore_index=True,
                 )
 
-            if card.get("status"):
-                df_status = pd.concat(
-                    [df_status, pd.DataFrame([{"status": card["status"]}])],
-                    ignore_index=True,
-                )
-
-    df_cards.drop_duplicates(inplace=True)
-    df_users.drop_duplicates(inplace=True)
-    # df_status.drop_duplicates(inplace=True)
-    df_tags.drop_duplicates(inplace=True)
-    df_tags.dropna(inplace=True)
-
-    url_status = f"{TAIGA_HOST}/userstory-statuses"
-    list_status = df_status["status"].tolist()
-
-    # nova coluna name para df_status
-    df_status["name"] = None
-
-    for status in list_status:
-        response = requests.get(f"{url_status}/{status}", headers=headers, timeout=10)
-        response.raise_for_status()
-        resp_status = response.json()
-        # adicionar o nome do status
-        df_status.loc[df_status["status"] == status, "name"] = resp_status.get("name")
+    df_cards = df_cards.drop_duplicates().reset_index(drop=True)
+    df_users = df_users.drop_duplicates().reset_index(drop=True)
+    df_tags = df_tags.drop_duplicates().dropna().reset_index(drop=True)
     df_status = df_status.drop_duplicates(subset="name_status").reset_index(drop=True)
 
     # extrair description de cards
@@ -205,6 +183,7 @@ def pipeline_cards(id_projects):
     # pegar roles e email dos users
     url_users = f"{TAIGA_HOST}/memberships?project="
     df_roles = pd.DataFrame(columns=["id", "name"])
+
     for id_project in id_projects:
         response = requests.get(f"{url_users}{id_project}", headers=headers, timeout=10)
         response.raise_for_status()
@@ -218,7 +197,7 @@ def pipeline_cards(id_projects):
 
             if user_id and user_email:
                 df_users.loc[df_users["id"] == user_id, "email"] = user_email
-                df_users.loc[df_users["id"] == user_id, "id_role"] = role_id
+                df_users.loc[df_users["id"] == user_id, "name_role"] = role_name
                 df_roles = pd.concat(
                     [df_roles, pd.DataFrame([{"id": role_id, "name": role_name}])],
                     ignore_index=True,
