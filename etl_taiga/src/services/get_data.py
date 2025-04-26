@@ -220,15 +220,19 @@ def pipeline_transform(df_cards, df_users, df_tags, df_status):
     """
     # Transformar os dados para o formato desejado
 
+    # dataframes para tempo
     df_cards["created_date"] = pd.to_datetime(df_cards["created_date"], utc=True)
     df_time = pd.DataFrame()
-    df_time["id"] = range(1, len(df_cards) + 1)
-    df_time["year"] = df_cards["created_date"].dt.year
-    df_time["month"] = df_cards["created_date"].dt.month
-    df_time["day"] = df_cards["created_date"].dt.day
-    df_time["hour"] = df_cards["created_date"].dt.hour
-    df_time["minute"] = df_cards["created_date"].dt.minute
-    df_time = df_time[["id", "year", "month", "day", "hour", "minute"]]
+    df_time["id_time"] = range(1, len(df_cards) + 1)
+    df_time["id_year"] = df_cards["created_date"].dt.year
+    df_time["id_month"] = df_cards["created_date"].dt.month
+    df_time["id_day"] = df_cards["created_date"].dt.day
+    df_time["id_hour"] = df_cards["created_date"].dt.hour
+    df_time["id_minute"] = df_cards["created_date"].dt.minute
+    df_time = df_time[["id_time", "id_day", "id_month", "id_year", "id_hour", "id_minute"]]
+
+    # df para usuarios
+
 
     return df_time
 
