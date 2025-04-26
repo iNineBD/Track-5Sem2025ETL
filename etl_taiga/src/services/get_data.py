@@ -207,6 +207,52 @@ def pipeline_cards(id_projects):
     df_cards["tags"] = df_cards["tags"].map(tag_map)
     # convertir tags para int
     df_cards["tags"] = df_cards["tags"].fillna(0).astype(int)
+    df_roles = df_roles.drop_duplicates(subset="name").reset_index(drop=True)
+
+    # renomeando as colunas
+    df_tags = df_tags.rename(columns={"tags": "tag_name", "id": "id_tag"})
+    df_tags = df_tags[["id_tag", "tag_name"]]
+    df_cards = df_cards.rename(
+        columns={
+            "assigned_to": "id_user",
+            "tags": "id_tag",
+            "id": "id_card",
+            "subject": "name_card",
+            "status": "id_status",
+        }
+    )
+    df_roles = df_roles.rename(columns={"id": "id_role", "name": "name_role"})
+    df_users = df_users.rename(columns={"id": "id_user", "name": "name_user"})
+
+    # garbage collection
+    del card
+    del cards
+    del assigned_to
+    del assigned_to_extra_info
+    del card_id
+    del id_card
+    del id_cards
+    del id_project
+    del id_projects
+    del list_ids_cards
+    del next_tag_id
+    del project_id
+    del response
+    del role_id
+    del role_name
+    del tag
+    del tag_id
+    del tag_map
+    del tag_value
+    del tags
+    del url_cards
+    del url_cards_full
+    del url_users
+    del user
+    del user_email
+    del user_id
+    del users
+    gc.collect()
 
     return df_cards, df_users, df_tags, df_status
 
