@@ -206,7 +206,7 @@ def pipeline_cards(id_projects):
     tag_map = dict(zip(df_tags["tags"], df_tags["id"]))
     df_cards["tags"] = df_cards["tags"].map(tag_map)
     # convertir tags para int
-    df_cards["tags"] = df_cards["tags"].fillna(0).astype(int)
+    df_cards["tags"] = df_cards["tags"].fillna(pd.NA).astype('Int64')
     df_roles = df_roles.drop_duplicates(subset="name").reset_index(drop=True)
 
     # renomeando as colunas
@@ -214,6 +214,7 @@ def pipeline_cards(id_projects):
     df_tags = df_tags[["id_tag", "tag_name"]]
     df_cards = df_cards.rename(
         columns={
+            "project": "id_project",
             "assigned_to": "id_user",
             "tags": "id_tag",
             "id": "id_card",
@@ -223,6 +224,7 @@ def pipeline_cards(id_projects):
     )
     df_roles = df_roles.rename(columns={"id": "id_role", "name": "name_role"})
     df_users = df_users.rename(columns={"id": "id_user", "name": "name_user"})
+    df_cards['created_date'] = pd.to_datetime(df_cards['created_date'], dayfirst=True)
 
     # garbage collection
     del card
@@ -254,7 +256,7 @@ def pipeline_cards(id_projects):
     del users
     gc.collect()
 
-    return df_cards, df_users, df_tags, df_status
+    return df_cards, df_users, df_tags, df_status, df_roles
 
 
 def pipeline_transform(df_cards, df_users, df_tags, df_status):
