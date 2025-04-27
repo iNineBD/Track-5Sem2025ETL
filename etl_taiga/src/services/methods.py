@@ -2,72 +2,155 @@
 Methods module for database operations.
 """
 
-from sqlalchemy.orm import sessionmaker
 from etl_taiga.models import (
-    FatoCard,
+    DimProject,
+    DimCard,
+    DimRole,
     DimUser,
     DimTag,
     DimStatus,
-    DimRole,
-    DimProject,
+    FatoCard,
+    DimTime,
 )
-from etl_taiga.src.services.auth import auth_taiga
-from etl_taiga.db import Connection
+from etl_taiga.models.Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
+from etl_taiga.db.Connection import connect_database, database_config
+from peewee import *
+import pandas as pd
+from functools import partial
+import logging
+
+db = database_config()
+db_open = connect_database(db)
 
 
-def get_auth():
+def delete_all_data(db_open):
     """
-    Authenticate with Taiga and return the token.
+    Delete all data from the database.
     """
-    auth = auth_taiga()
-    if not auth:
-        raise ValueError("Erro ao autenticar no Taiga")
-    return auth
+    tables_to_drop = [
+        FatoCard.FatoCard,
+        DimCard.DimCard,
+        DimTag.DimTag,
+        DimTime.DimTime,
+        DimStatus.DimStatus,
+        DimProject.DimProject,
+        DimUser.DimUser,
+        DimRole.DimRole,
+        DimDay,
+        DimHour,
+        DimMinute,
+        DimMonth,
+        DimYear,
+    ]
 
-
-def get_session():
-    """
-    Return the database session.
-    """
-    session = Connection()
-    return session
-
-
-def reset_database(session: sessionmaker):
-    """
-    Reset the database by deleting all records.
-    """
+    tables_to_create = [
+        DimRole.DimRole,
+        DimUser.DimUser,
+        DimYear,
+        DimMonth,
+        DimDay,
+        DimHour,
+        DimMinute,
+        DimStatus.DimStatus,
+        DimProject.DimProject,
+        DimTag.DimTag,
+        DimTime.DimTime,
+        DimCard.DimCard,
+        FatoCard.FatoCard,
+    ]
     try:
-        session.query(FatoCard).delete()
-        session.query(DimUser).delete()
-        session.query(DimTag).delete()
-        session.query(DimStatus).delete()
-        session.query(DimRole).delete()
-        session.query(DimProject).delete()
-        session.commit()
-        print("Dados apagados com sucesso")
-    except Exception as error:
-        session.rollback()
-        print(f"Erro ao apagar dados: {error}")
+        with db_open.atomic():
+            db.execute_sql("SET session_replication_role = replica;")
+            db.drop_tables(tables_to_drop, safe=True, cascade=True)
+            db.create_tables(tables_to_create, safe=True)
+
+            db.execute_sql("SET session_replication_role = DEFAULT;")
+
+        print("Database reset successfully.")
+
+    except OperationalError as e:
+        print(f"Error resetting database: {e}")
+        raise
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        raise
+    finally:
+        if not db.is_closed():
+            db.close()
+            print("Database connection closed.")
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def insert_data(
-    session, df_projects, df_roles, df_users, df_tags, df_status, df_fact_cards
+    db,
+    df_fact_cards,
+    df_projects,
+    df_dim_cards,
+    df_status,
+    df_tags,
+    df_users,
+    df_roles,
+    df_dim_time,
+    df_dim_year,
+    df_dim_month,
+    df_dim_day,
+    df_dim_hour,
+    df_dim_minute,
+    batch_size=100,
 ):
-    """
-    Insert data into the database.
-    """
+    insertion_sequence = [
+        (DimRole.DimRole, df_roles),
+        (DimUser.DimUser, df_users),
+        (DimYear, df_dim_year),
+        (DimMonth, df_dim_month),
+        (DimDay, df_dim_day),
+        (DimHour, df_dim_hour),
+        (DimMinute, df_dim_minute),
+        (DimStatus.DimStatus, df_status),
+        (DimProject.DimProject, df_projects),
+        (DimTag.DimTag, df_tags),
+        (DimTime.DimTime, df_dim_time),
+        (DimCard.DimCard, df_dim_cards),
+        (FatoCard.FatoCard, df_fact_cards),
+    ]
+
+    results = {"tables": {}, "status": "success", "total": 0}
+    total_inserted = 0
+
     try:
+        # Processar cada inserção na ordem correta
+        for model_class, df in insertion_sequence:
+            if df is None:
+                logger.warning(f"DataFrame para {model_class.__name__} é None")
+                results[model_class.__name__] = 0
+                continue
 
-        session.bulk_insert_mappings(DimProject, df_projects.to_dict(orient="records"))
-        session.bulk_insert_mappings(DimRole, df_roles.to_dict(orient="records"))
-        session.bulk_insert_mappings(DimUser, df_users.to_dict(orient="records"))
-        session.bulk_insert_mappings(DimTag, df_tags.to_dict(orient="records"))
-        session.bulk_insert_mappings(DimStatus, df_status.to_dict(orient="records"))
-        session.bulk_insert_mappings(FatoCard, df_fact_cards.to_dict(orient="records"))
+            if df.empty:
+                logger.warning(f"DataFrame para {model_class.__name__} está vazio")
+                results[model_class.__name__] = 0
+                continue
 
-        session.commit()
-        print("Dados inseridos com sucesso")
-    except Exception as error:
-        session.rollback()
-        print(f"Erro ao inserir dados: {error}")
+            data = df.replace({pd.NA: None}).to_dict("records")
+            inserted = 0
+
+            with db.atomic():
+                for batch in chunked(data, batch_size):
+                    model_class.insert_many(batch).execute()
+                    inserted += len(batch)
+
+            logger.info(f"Inseridos {inserted} registros em {model_class.__name__}")
+
+            results["tables"][model_class.__name__] = inserted
+            results["total"] += inserted
+
+        return results
+
+    except Exception as e:
+        logger.error(f"Erro na inserção: {str(e)}", exc_info=True)
+        results["status"] = "error"
+        results["error"] = str(e)
+        db.rollback()
+        return results
