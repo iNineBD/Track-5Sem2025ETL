@@ -318,48 +318,34 @@ def pipeline_main():
     """
     Main function to run the ETL pipeline.
     """
+    # chamando as funções
+    df_projects, ids_projects = pipeline_projects()
+    df_cards, df_users, df_tags, df_status, df_roles = pipeline_cards(ids_projects)
+    dim_time, dim_day, dim_month, dim_year, dim_hour, dim_minute, df_cards, df_users = pipeline_transform(df_cards, df_status, df_users, df_roles)
 
-    df_projects, ids_projects = pipeline_projets()
-    df_cards, df_status, df_tags, id_users, df_time = pipeline_cards(ids_projects)
-    df_users, df_roles = pipeline_users(ids_projects)
+    # merges de datas
+    df_cards = df_cards.merge(dim_day, on='day', how='left')
+    df_cards = df_cards.merge(dim_month, on='month', how='left')
+    df_cards = df_cards.merge(dim_year, on='year', how='left')
+    df_cards = df_cards.merge(dim_hour, on='hour', how='left')
+    df_cards = df_cards.merge(dim_minute, on='minute', how='left')
 
-    # Dimensão Year
-    df_year = df_time[["year"]].drop_duplicates().reset_index(drop=True)
-    df_year["id_year"] = df_year.index + 1
-    # Dimensão Month
-    df_month = df_time[["month"]].drop_duplicates().reset_index(drop=True)
-    df_month["id_month"] = df_month.index + 1
-    # Dimensão Day
-    df_day = df_time[["day"]].drop_duplicates().reset_index(drop=True)
-    df_day["id_day"] = df_day.index + 1
-    # Dimensão Hour
-    df_hour = df_time[["hour"]].drop_duplicates().reset_index(drop=True)
-    df_hour["id_hour"] = df_hour.index + 1
-    # Dimensão Minute
-    df_minute = df_time[["minute"]].drop_duplicates().reset_index(drop=True)
-    df_minute["id_minute"] = df_minute.index + 1
+    # merge com dim time para criar os ids referentes as datas
+    df_cards = df_cards.merge(dim_time, on=['id_day', 'id_month', 'id_year', 'id_hour', 'id_minute'], how='left')
 
-    dim_time = df_time.copy()
+    # função para criar a tabela fato
+    def create_fato_cards(df_cards):
 
-    dim_time = dim_time.merge(df_year, on="year", how="left")
-    dim_time = dim_time.merge(df_month, on="month", how="left")
-    dim_time = dim_time.merge(df_day, on="day", how="left")
-    dim_time = dim_time.merge(df_hour, on="hour", how="left")
-    dim_time = dim_time.merge(df_minute, on="minute", how="left")
+        fato_cards = df_cards[['id_card', 'id_project', 'id_user', 'id_status', 'id_tag', 'id_time']].copy()
+        fato_cards['qtd_cards'] = 1
+        fato_cards['id_fato_card'] = fato_cards.index + 1
 
-    # Selecionar apenas os ids das dimensões + o id original
-    dim_time = dim_time[["id", "id_year", "id_month", "id_day", "id_hour", "id_minute"]]
+        fato_cards = fato_cards[
+            ['id_fato_card', 'id_card', 'id_project', 'id_user', 'id_status', 'id_time', 'id_tag', 'qtd_cards']]
 
-    fato_cards = pd.DataFrame()
-    fato_cards["id"] = range(1, len(df_cards) + 1)
-    fato_cards["id_card"] = df_cards["id_card"]
-    fato_cards["id_project"] = df_cards["project"]
-    fato_cards["id_user"] = df_users["id_user"]
-    fato_cards["id_status"] = df_status["id_status"]
-    fato_cards["id_tag"] = df_tags["id_tag"]
-    fato_cards["qtd_cards"] = 1
+        return fato_cards
 
-    df_cards = df_cards.drop(columns=["project", "fk_id_user", "id_tag"])
+    fato_cards = create_fato_cards(df_cards)
 
     return (
         fato_cards,
@@ -370,28 +356,9 @@ def pipeline_main():
         df_users,
         df_roles,
         dim_time,
-        df_year,
-        df_month,
-        df_day,
-        df_hour,
-        df_minute,
+        dim_year,
+        dim_month,
+        dim_day,
+        dim_hour,
+        dim_minute,
     )
-
-
-# %%
-
-(
-    fato_cards,
-    df_projects,
-    df_cards,
-    df_status,
-    df_tags,
-    df_users,
-    df_roles,
-    dim_time,
-    df_year,
-    df_month,
-    df_day,
-    df_hour,
-    df_minute,
-) = pipeline_main()
