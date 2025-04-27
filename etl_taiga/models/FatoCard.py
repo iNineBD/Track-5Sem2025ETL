@@ -1,11 +1,11 @@
-from peewee import *
-from etl_taiga.models import *
 from etl_taiga.models.DimCard import DimCard
 from etl_taiga.models.DimProject import DimProject
 from etl_taiga.models.DimStatus import DimStatus
 from etl_taiga.models.DimTag import DimTag
 from etl_taiga.models.DimTime import DimTime
 from etl_taiga.models.DimUser import DimUser
+from peewee import AutoField, IntegerField, ForeignKeyField
+from etl_taiga.models import BaseModel
 
 
 class FatoCard(BaseModel):
@@ -28,10 +28,10 @@ class FatoCard(BaseModel):
         backref="fatos",
     )
 
-    id_time_created = ForeignKeyField(
+    id_time = ForeignKeyField(
         DimTime,
-        column_name="id_time_created",
-        backref="fatos_criados",
+        column_name="id_time",
+        backref="fatos",
         on_delete="CASCADE",
     )
 

@@ -1,6 +1,5 @@
-from peewee import *
+from peewee import AutoField, CharField
 from etl_taiga.models import BaseModel
-from etl_taiga.models import db
 
 
 class DimRole(BaseModel):

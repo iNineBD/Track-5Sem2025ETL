@@ -1,7 +1,6 @@
-from peewee import *
-from etl_taiga.models import BaseModel
-from etl_taiga.models import db
-from etl_taiga.models import DimRole
+from peewee import AutoField, CharField, ForeignKeyField
+from . import BaseModel
+from etl_taiga.models.DimRole import DimRole
 
 
 class DimUser(BaseModel):
@@ -12,7 +11,7 @@ class DimUser(BaseModel):
     email = CharField(max_length=200, null=False)
     password = CharField(max_length=400, null=True)
     id_role = ForeignKeyField(
-        DimRole, backref="users", column_name="id_role", on_delete="CASCADE", null=False
+        DimRole, backref="users", column_name="id_role", null=False
     )
 
     class Meta:
