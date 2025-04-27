@@ -46,6 +46,7 @@ flake8 etl_taiga
 ```
 
 Runs the tests and details the coverage in ```index.html``` in the "coverage_report" directory at the root of the project.
+Evaluate the report using the user's preferred browser
 
 ```bash
 pytest --disable-warnings --cov=etl_taiga --cov-report=html:coverage_report --cov-report=xml:coverage_report/coverage.xml
