@@ -206,7 +206,7 @@ def pipeline_cards(id_projects):
     tag_map = dict(zip(df_tags["tags"], df_tags["id"]))
     df_cards["tags"] = df_cards["tags"].map(tag_map)
     # convertir tags para int
-    df_cards["tags"] = df_cards["tags"].fillna(pd.NA).astype('Int64')
+    df_cards["tags"] = df_cards["tags"].fillna(pd.NA).astype("Int64")
     df_roles = df_roles.drop_duplicates(subset="name").reset_index(drop=True)
 
     # renomeando as colunas
@@ -224,7 +224,7 @@ def pipeline_cards(id_projects):
     )
     df_roles = df_roles.rename(columns={"id": "id_role", "name": "name_role"})
     df_users = df_users.rename(columns={"id": "id_user", "name": "name_user"})
-    df_cards['created_date'] = pd.to_datetime(df_cards['created_date'], dayfirst=True)
+    df_cards["created_date"] = pd.to_datetime(df_cards["created_date"], dayfirst=True)
 
     # garbage collection
     del card
@@ -267,51 +267,70 @@ def pipeline_transform(df_cards, df_status, df_users, df_roles):
 
     # dataframes para tempo
     # extrair tempo
-    df_cards['day'] = df_cards['created_date'].dt.day
-    df_cards['month'] = df_cards['created_date'].dt.month
-    df_cards['year'] = df_cards['created_date'].dt.year
-    df_cards['hour'] = df_cards['created_date'].dt.hour
-    df_cards['minute'] = df_cards['created_date'].dt.minute
+    df_cards["day"] = df_cards["created_date"].dt.day
+    df_cards["month"] = df_cards["created_date"].dt.month
+    df_cards["year"] = df_cards["created_date"].dt.year
+    df_cards["hour"] = df_cards["created_date"].dt.hour
+    df_cards["minute"] = df_cards["created_date"].dt.minute
 
     def create_dim(df, column, id_name):
-        dim = pd.DataFrame({column: df[column].unique()}).sort_values(column).reset_index(drop=True)
+        dim = (
+            pd.DataFrame({column: df[column].unique()})
+            .sort_values(column)
+            .reset_index(drop=True)
+        )
         dim[id_name] = dim.index + 1
         return dim
 
     # criar tabelas dimensão
-    dim_day = create_dim(df_cards, 'day', 'id_day')
-    dim_month = create_dim(df_cards, 'month', 'id_month')
-    dim_year = create_dim(df_cards, 'year', 'id_year')
-    dim_hour = create_dim(df_cards, 'hour', 'id_hour')
-    dim_minute = create_dim(df_cards, 'minute', 'id_minute')
+    dim_day = create_dim(df_cards, "day", "id_day")
+    dim_month = create_dim(df_cards, "month", "id_month")
+    dim_year = create_dim(df_cards, "year", "id_year")
+    dim_hour = create_dim(df_cards, "hour", "id_hour")
+    dim_minute = create_dim(df_cards, "minute", "id_minute")
 
     # criar dim time juntando tudo
-    dim_time = df_cards[['day', 'month', 'year', 'hour', 'minute']].drop_duplicates().reset_index(drop=True)
-    # joins para add ids
     dim_time = (
-        df_cards[['day', 'month', 'year', 'hour', 'minute']]
+        df_cards[["day", "month", "year", "hour", "minute"]]
         .drop_duplicates()
-        .merge(dim_day, on='day')
-        .merge(dim_month, on='month')
-        .merge(dim_year, on='year')
-        .merge(dim_hour, on='hour')
-        .merge(dim_minute, on='minute')
         .reset_index(drop=True)
     )
-    dim_time.insert(0, 'id_time', dim_time.index + 1)
-    dim_time = dim_time[['id_time', 'id_day', 'id_month', 'id_year', 'id_hour', 'id_minute']]
+    # joins para add ids
+    dim_time = (
+        df_cards[["day", "month", "year", "hour", "minute"]]
+        .drop_duplicates()
+        .merge(dim_day, on="day")
+        .merge(dim_month, on="month")
+        .merge(dim_year, on="year")
+        .merge(dim_hour, on="hour")
+        .merge(dim_minute, on="minute")
+        .reset_index(drop=True)
+    )
+    dim_time.insert(0, "id_time", dim_time.index + 1)
+    dim_time = dim_time[
+        ["id_time", "id_day", "id_month", "id_year", "id_hour", "id_minute"]
+    ]
 
     # mudando status de nome para id
-    status_map = dict(zip(df_status['name_status'], df_status['id_status']))
-    df_cards['id_status'] = df_cards['id_status'].map(status_map)
-    df_cards.drop(columns=['created_date'], inplace=True)
+    status_map = dict(zip(df_status["name_status"], df_status["id_status"]))
+    df_cards["id_status"] = df_cards["id_status"].map(status_map)
+    df_cards.drop(columns=["created_date"], inplace=True)
 
     # mudando roles de users para id
-    role_map = dict(zip(df_roles['name_role'], df_roles['id_role']))
-    df_users['id_role'] = df_users['name_role'].map(role_map)
-    df_users.drop(columns=['name_role'], inplace=True)
+    role_map = dict(zip(df_roles["name_role"], df_roles["id_role"]))
+    df_users["id_role"] = df_users["name_role"].map(role_map)
+    df_users.drop(columns=["name_role"], inplace=True)
 
-    return dim_time, dim_day, dim_month, dim_year, dim_hour, dim_minute, df_cards, df_users
+    return (
+        dim_time,
+        dim_day,
+        dim_month,
+        dim_year,
+        dim_hour,
+        dim_minute,
+        df_cards,
+        df_users,
+    )
 
 
 def pipeline_main():
@@ -321,27 +340,45 @@ def pipeline_main():
     # chamando as funções
     df_projects, ids_projects = pipeline_projects()
     df_cards, df_users, df_tags, df_status, df_roles = pipeline_cards(ids_projects)
-    dim_time, dim_day, dim_month, dim_year, dim_hour, dim_minute, df_cards, df_users = pipeline_transform(df_cards, df_status, df_users, df_roles)
+    dim_time, dim_day, dim_month, dim_year, dim_hour, dim_minute, df_cards, df_users = (
+        pipeline_transform(df_cards, df_status, df_users, df_roles)
+    )
 
     # merges de datas
-    df_cards = df_cards.merge(dim_day, on='day', how='left')
-    df_cards = df_cards.merge(dim_month, on='month', how='left')
-    df_cards = df_cards.merge(dim_year, on='year', how='left')
-    df_cards = df_cards.merge(dim_hour, on='hour', how='left')
-    df_cards = df_cards.merge(dim_minute, on='minute', how='left')
+    df_cards = df_cards.merge(dim_day, on="day", how="left")
+    df_cards = df_cards.merge(dim_month, on="month", how="left")
+    df_cards = df_cards.merge(dim_year, on="year", how="left")
+    df_cards = df_cards.merge(dim_hour, on="hour", how="left")
+    df_cards = df_cards.merge(dim_minute, on="minute", how="left")
 
     # merge com dim time para criar os ids referentes as datas
-    df_cards = df_cards.merge(dim_time, on=['id_day', 'id_month', 'id_year', 'id_hour', 'id_minute'], how='left')
+    df_cards = df_cards.merge(
+        dim_time,
+        on=["id_day", "id_month", "id_year", "id_hour", "id_minute"],
+        how="left",
+    )
 
     # função para criar a tabela fato
     def create_fato_cards(df_cards):
 
-        fato_cards = df_cards[['id_card', 'id_project', 'id_user', 'id_status', 'id_tag', 'id_time']].copy()
-        fato_cards['qtd_cards'] = 1
-        fato_cards['id_fato_card'] = fato_cards.index + 1
+        fato_cards = df_cards[
+            ["id_card", "id_project", "id_user", "id_status", "id_tag", "id_time"]
+        ].copy()
+        fato_cards["qtd_cards"] = 1
+        fato_cards["id_fato_card"] = fato_cards.index + 1
 
         fato_cards = fato_cards[
-            ['id_fato_card', 'id_card', 'id_project', 'id_user', 'id_status', 'id_time', 'id_tag', 'qtd_cards']]
+            [
+                "id_fato_card",
+                "id_card",
+                "id_project",
+                "id_user",
+                "id_status",
+                "id_time",
+                "id_tag",
+                "qtd_cards",
+            ]
+        ]
 
         return fato_cards
 
