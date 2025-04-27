@@ -259,27 +259,59 @@ def pipeline_cards(id_projects):
     return df_cards, df_users, df_tags, df_status, df_roles
 
 
-def pipeline_transform(df_cards, df_users, df_tags, df_status):
+def pipeline_transform(df_cards, df_status, df_users, df_roles):
     """
     Transform the data for the ETL pipeline.
     """
     # Transformar os dados para o formato desejado
 
     # dataframes para tempo
-    df_cards["created_date"] = pd.to_datetime(df_cards["created_date"], utc=True)
-    df_time = pd.DataFrame()
-    df_time["id_time"] = range(1, len(df_cards) + 1)
-    df_time["id_year"] = df_cards["created_date"].dt.year
-    df_time["id_month"] = df_cards["created_date"].dt.month
-    df_time["id_day"] = df_cards["created_date"].dt.day
-    df_time["id_hour"] = df_cards["created_date"].dt.hour
-    df_time["id_minute"] = df_cards["created_date"].dt.minute
-    df_time = df_time[["id_time", "id_day", "id_month", "id_year", "id_hour", "id_minute"]]
+    # extrair tempo
+    df_cards['day'] = df_cards['created_date'].dt.day
+    df_cards['month'] = df_cards['created_date'].dt.month
+    df_cards['year'] = df_cards['created_date'].dt.year
+    df_cards['hour'] = df_cards['created_date'].dt.hour
+    df_cards['minute'] = df_cards['created_date'].dt.minute
 
-    # df para usuarios
+    def create_dim(df, column, id_name):
+        dim = pd.DataFrame({column: df[column].unique()}).sort_values(column).reset_index(drop=True)
+        dim[id_name] = dim.index + 1
+        return dim
 
+    # criar tabelas dimensão
+    dim_day = create_dim(df_cards, 'day', 'id_day')
+    dim_month = create_dim(df_cards, 'month', 'id_month')
+    dim_year = create_dim(df_cards, 'year', 'id_year')
+    dim_hour = create_dim(df_cards, 'hour', 'id_hour')
+    dim_minute = create_dim(df_cards, 'minute', 'id_minute')
 
-    return df_time
+    # criar dim time juntando tudo
+    dim_time = df_cards[['day', 'month', 'year', 'hour', 'minute']].drop_duplicates().reset_index(drop=True)
+    # joins para add ids
+    dim_time = (
+        df_cards[['day', 'month', 'year', 'hour', 'minute']]
+        .drop_duplicates()
+        .merge(dim_day, on='day')
+        .merge(dim_month, on='month')
+        .merge(dim_year, on='year')
+        .merge(dim_hour, on='hour')
+        .merge(dim_minute, on='minute')
+        .reset_index(drop=True)
+    )
+    dim_time.insert(0, 'id_time', dim_time.index + 1)
+    dim_time = dim_time[['id_time', 'id_day', 'id_month', 'id_year', 'id_hour', 'id_minute']]
+
+    # mudando status de nome para id
+    status_map = dict(zip(df_status['name_status'], df_status['id_status']))
+    df_cards['id_status'] = df_cards['id_status'].map(status_map)
+    df_cards.drop(columns=['created_date'], inplace=True)
+
+    # mudando roles de users para id
+    role_map = dict(zip(df_roles['name_role'], df_roles['id_role']))
+    df_users['id_role'] = df_users['name_role'].map(role_map)
+    df_users.drop(columns=['name_role'], inplace=True)
+
+    return dim_time, dim_day, dim_month, dim_year, dim_hour, dim_minute, df_cards, df_users
 
 
 def pipeline_main():
