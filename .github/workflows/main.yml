@@ -62,8 +62,9 @@ jobs:
           args: >
             -Dsonar.projectKey=iNineBD_Track-5Sem2025Server
             -Dsonar.organization=ininetrack
-            -Dsonar.python.coverage.reportPaths=coverage_report/coverage.xml
             -Dsonar.sources=etl_taiga
+            -Dsonar.exclusions=etl_taiga/tests/**
+            -Dsonar.python.coverage.reportPaths=coverage_report/coverage.xml
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
