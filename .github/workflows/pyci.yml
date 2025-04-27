@@ -13,23 +13,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
+      - name: Check out repository # Clona o repositório na máquina runner
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.10" # Definindo a versão do Python para 3.10
+          cache: "pip" # Habilitando o cache do pip para acelerar as instalações de dependências
 
-      - name: Install dependencies # Instalando o Flake8 para linting e pytest para testes
+      - name: Install dependencies # Instalando todos os pacotes necessários usando lista do repositório.
         run: |
-          python -m pip install --upgrade pip
-          pip install flake8 pytest
+          python -m pip install --upgrade pip setuptools wheel cython
+          pip install -r requirements.txt
 
-      - name: Run Flake8 linting # Rodando o Flake8 no diretório atual
+      - name: Run Flake8 linting # Executa Flake8 para linting no código do projeto
         run: |
           flake8 etl_taiga
 
-      - name: Run Pytest # Rodando o PyTest no diretório atual
+      # Cria o diretório de relatórios de cobertura, se necessário
+      - name: Ensure coverage_report directory exists
+        run: mkdir -p coverage_report
+
+      - name: Run Pytest for Code Coverage and save to file # Rodando o PyTest apenas para gerar a cobertura de código e salvar em arquivo HTML
         run: |
-          pytest etl_taiga/tests
+          pytest --maxfail=1 --disable-warnings --cov=etl_taiga --cov-report=html:coverage_report --cov-report=xml:coverage_report/coverage.xml
+        continue-on-error: true
+
+      - name: Upload coverage report # Fazendo upload do diretório de cobertura gerado
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage_report

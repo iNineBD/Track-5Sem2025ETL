@@ -1,3 +1,4 @@
+# src/main.py
 """
 Main module for the ETL pipeline.
 """
