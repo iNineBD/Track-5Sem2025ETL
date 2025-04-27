@@ -21,7 +21,7 @@ TOKEN = auth_taiga()
 headers = {"Content-Type": "application/json", "Authorization": f"Bearer {TOKEN}"}
 
 
-def pipeline_projets():
+def pipeline_projects():
     """
     Generate a DataFrame for projects.
     """
