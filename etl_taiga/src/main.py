@@ -3,45 +3,125 @@ Main module for the ETL pipeline.
 """
 
 #!/usr/bin/env python3
+from etl_taiga.src.services.methods import delete_all_data, insert_data
+from etl_taiga.src.services.get_data import pipeline_main
+from etl_taiga.db.Connection import connect_database, database_config
+import logging
+from datetime import datetime
 
-from etl_taiga.db.Connection import conectar_banco
-from services.get_data import (
-    pipeline_projets,
-    pipeline_roles,
-    pipeline_users,
-    pipeline_tags,
-    pipeline_status,
-    pipeline_fact_cards,
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("etl_taiga.log"), logging.StreamHandler()],
 )
-from services.methods import reset_database, insert_data
+logger = logging.getLogger(__name__)
 
 
-def main():
+def run_etl_process():
     """
-    Main function to execute the ETL pipeline.
+    Main ETL process execution function.
     """
-    session = conectar_banco()
-    projetos = pipeline_projets()
-    roles = pipeline_roles()
-    users = pipeline_users(roles)
-    tags = pipeline_tags()
-    status = pipeline_status()
-    fact_cards = pipeline_fact_cards()
+    # Initialize database connection
+    db_config = database_config()
+    db = connect_database(db_config)
 
     try:
-        # Chama a função para apagar os dados das tabelas
-        reset_database(session)
+        # Step 1: Reset database
+        logger.info("Starting database reset...")
+        start_time = datetime.now()
 
-        # Chama a função para inserir os novos dados
-        insert_data(session, projetos, roles, users, tags, status, fact_cards)
+        delete_all_data(db)
+        logger.info(f"Database reset completed in {datetime.now() - start_time}")
 
-    except Exception as error:  # Replace with the specific exception type
-        print(f"Ocorreu um erro na execução: {error}")
+        # Step 2: Extract and transform data
+        logger.info("Starting data extraction and transformation...")
+        start_time = datetime.now()
 
+        dataframes = pipeline_main()
+        logger.info(f"Data transformation completed in {datetime.now() - start_time}")
+
+        # Step 3: Load data
+        logger.info("Starting data loading...")
+        start_time = datetime.now()
+
+        (
+            fato_cards,
+            df_projects,
+            df_cards,
+            df_status,
+            df_tags,
+            df_users,
+            df_roles,
+            dim_time,
+            dim_year,
+            dim_month,
+            dim_day,
+            dim_hour,
+            dim_minute,
+        ) = pipeline_main()
+
+        df_cards = df_cards.drop(
+            columns=[
+                "id_user",
+                "id_tag",
+                "id_status",
+                "id_project",
+                "day",
+                "month",
+                "year",
+                "hour",
+                "minute",
+                "id_day",
+                "id_month",
+                "id_year",
+                "id_hour",
+                "id_minute",
+                "id_time",
+            ]
+        )
+        df_cards = df_cards.drop_duplicates(subset=["id_card"], keep="last")
+
+        # Insert data
+        result = insert_data(
+            db,
+            fato_cards,
+            df_projects,
+            df_cards,
+            df_status,
+            df_tags,
+            df_users,
+            df_roles,
+            dim_time,
+            dim_year,
+            dim_month,
+            dim_day,
+            dim_hour,
+            dim_minute,
+            batch_size=100,
+        )
+
+        if result["status"] == "success":
+            logger.info(f"Data loading completed in {datetime.now() - start_time}")
+            logger.info(f"Total records inserted: {result['total']}")
+        else:
+            logger.error(f"Data loading failed: {result['error']}")
+            raise Exception(result["error"])
+
+    except Exception as e:
+        logger.error(f"ETL process failed: {str(e)}", exc_info=True)
+        raise
     finally:
-        # Fechar a sessão
-        session.close()
+        if not db.is_closed():
+            db.close()
+        logger.info("Database connection closed")
+        logger.info("ETL process completed")
 
 
 if __name__ == "__main__":
-    main()
+    logger.info("Starting Taiga ETL process")
+    try:
+        run_etl_process()
+        logger.info("ETL process finished successfully")
+    except Exception as e:
+        logger.error(f"ETL process terminated with errors: {str(e)}", exc_info=True)
+        raise SystemExit(1)
