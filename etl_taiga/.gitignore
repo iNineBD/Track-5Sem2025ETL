@@ -128,7 +128,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-etl_taiga/.env
+.env
 .venv
 env/
 venv/
