@@ -1,3 +1,14 @@
-# models/__init__.py
-from etl_taiga.db.Connection import Base
-from .FatoCard import FatoCard, DimUser, DimTag, DimStatus, DimRole, DimProject
+from dotenv import load_dotenv
+import os
+from peewee import *
+from etl_taiga.db.Connection import database_config
+
+load_dotenv()
+DB_SCHEMA = os.getenv("DB_SCHEMA")
+db = database_config()
+
+
+class BaseModel(Model):
+    class Meta:
+        database = db
+        schema = DB_SCHEMA
