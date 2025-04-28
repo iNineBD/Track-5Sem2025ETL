@@ -24,6 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Verify dependencies installation
+        run: pip list
+
       - name: Set PYTHONPATH # Define o PYTHONPATH para incluir o diretório raiz do projeto
         run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
