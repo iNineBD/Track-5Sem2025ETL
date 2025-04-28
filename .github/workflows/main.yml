@@ -8,25 +8,68 @@ on:
 
 jobs:
   build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository # Clona o repositório na máquina runner
         uses: actions/checkout@v3
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10" # Definindo a versão do Python para 3.10
+          cache: "pip" # Habilitando o cache do pip para acelerar as instalações de dependências
 
-      - name: Install dependencies
+      - name: Install dependencies # Instala as dependências do projeto
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Set PYTHONPATH
+      - name: Verify dependencies installation
+        run: pip list
+
+      - name: Set PYTHONPATH # Define o PYTHONPATH para incluir o diretório raiz do projeto
         run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
-      - name: Run tests
+      - name: Ensure coverage_report directory exists # Garante que o diretório de relatório exista
+        run: mkdir -p coverage_report
+
+      - name: Run tests with coverage # Executa Pytest e gera relatório de cobertura em XML (para SonarCloud)
         run: |
-          pytest
+          pytest --cov=etl_taiga --cov-report=xml:coverage_report/coverage.xml
+
+      - name: Upload coverage report # Faz upload do relatório de cobertura XML para uso em outros jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage_report/coverage.xml
+
+  sonarcloud-analysis:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout repository # Clona o repositório com histórico completo para análise
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # necessário para análise completa do Git
+
+      - name: Download coverage report # Baixa o relatório de cobertura gerado no job anterior
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+
+      - name: SonarCloud Scan # Executa análise no SonarCloud com suporte à cobertura de testes
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          args: >
+            -Dsonar.projectKey=iNineBD_Track-5Sem2025Server
+            -Dsonar.organization=ininetrack
+            -Dsonar.sources=etl_taiga
+            -Dsonar.exclusions=etl_taiga/tests/**
+            -Dsonar.python.coverage.reportPaths=coverage_report/coverage.xml
+            -Dsonar.verbose=true
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

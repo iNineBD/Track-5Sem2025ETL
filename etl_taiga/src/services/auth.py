@@ -1,19 +1,29 @@
+# src/services/auth.py
 """
 Module for authentication with Taiga API.
 """
 
+import os
 import requests
+from dotenv import load_dotenv
+from taiga import TaigaAPI
 
-TAIGA_HOST = "http://209.38.145.133:9000/"
-TAIGA_USER = "taiga-admin"
-TAIGA_PASSWORD = "admin"
+# %%
+
+load_dotenv()
+
+TAIGA_HOST = os.getenv("TAIGA_HOST")
+TAIGA_USER = os.getenv("TAIGA_USER")
+TAIGA_PASSWORD = os.getenv("TAIGA_PASSWORD")
 
 
+# %%
 def auth_taiga():
     """
     Authenticate with Taiga and return the token.
     """
-    auth_user = {"type": "normal", "username": TAIGA_USER, "password": TAIGA_PASSWORD}
-    auth_response = requests.post(f"{TAIGA_HOST}/api/v1/auth", json=auth_user, timeout=10)
-    token = auth_response.json()["auth_token"]
+    # Initialize the Taiga API client
+    api = TaigaAPI()
+    api.auth(username=TAIGA_USER, password=TAIGA_PASSWORD)
+    token = api.token
     return token
