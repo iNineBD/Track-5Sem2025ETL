@@ -1,3 +1,4 @@
+# src/services/auth.py
 """
 Module for authentication with Taiga API.
 """
