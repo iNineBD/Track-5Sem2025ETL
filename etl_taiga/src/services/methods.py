@@ -17,7 +17,6 @@ from etl_taiga.models.Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
 from etl_taiga.db.Connection import connect_database, database_config
 from peewee import *
 import pandas as pd
-from functools import partial
 import logging
 
 db = database_config()
@@ -29,13 +28,11 @@ def delete_all_data(db_open):
     Delete all data from the database.
     """
     tables_to_drop = [
-        FatoCard.FatoCard,
         DimCard.DimCard,
         DimTag.DimTag,
         DimTime.DimTime,
         DimStatus.DimStatus,
         DimProject.DimProject,
-        DimUser.DimUser,
         DimRole.DimRole,
         DimDay,
         DimHour,
@@ -46,7 +43,6 @@ def delete_all_data(db_open):
 
     tables_to_create = [
         DimRole.DimRole,
-        DimUser.DimUser,
         DimYear,
         DimMonth,
         DimDay,
@@ -62,6 +58,7 @@ def delete_all_data(db_open):
     try:
         with db_open.atomic():
             db.execute_sql("SET session_replication_role = replica;")
+            db.execute_sql("DELETE FROM dim_user WHERE password IS NULL;")
             db.drop_tables(tables_to_drop, safe=True, cascade=True)
             db.create_tables(tables_to_create, safe=True)
 
