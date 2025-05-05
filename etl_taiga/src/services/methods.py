@@ -119,20 +119,25 @@ def insert_data(
     ]
 
     results = {"tables": {}, "status": "success", "total": 0}
-    total_inserted = 0
 
     try:
         # Processar cada inserção na ordem correta
         for model_class, df in insertion_sequence:
-            if df is None:
-                logger.warning(f"DataFrame para {model_class.__name__} é None")
+            if df is None or df.empty:
+                logger.warning(f"DataFrame para {model_class.__name__} esta vazio ou nulo")
                 results[model_class.__name__] = 0
                 continue
 
-            if df.empty:
-                logger.warning(f"DataFrame para {model_class.__name__} está vazio")
-                results[model_class.__name__] = 0
-                continue
+            if model_class == FatoCard.FatoCard:
+                existing_ids = {r.id_fato_card for r in model_class.select(model_class.id_fato_card)}
+
+                if 'id_fato_card' in df.columns:
+                    df = df[~df['id_fato_card'].isin(existing_ids)]
+
+                if df.empty:
+                    logger.info(f"Nenhum novo registro para inserir em FatoCard")
+                    results["tables"][model_class.__name__] = 0
+                    continue
 
             data = df.replace({pd.NA: None}).to_dict("records")
             inserted = 0
@@ -143,7 +148,6 @@ def insert_data(
                     inserted += len(batch)
 
             logger.info(f"Inseridos {inserted} registros em {model_class.__name__}")
-
             results["tables"][model_class.__name__] = inserted
             results["total"] += inserted
 
@@ -153,5 +157,6 @@ def insert_data(
         logger.error(f"Erro na inserção: {str(e)}", exc_info=True)
         results["status"] = "error"
         results["error"] = str(e)
-        db.rollback()
+        if not db.is_closed():
+            db.rollback()
         return results
