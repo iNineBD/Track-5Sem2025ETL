@@ -58,7 +58,7 @@ def delete_all_data(db_open):
     try:
         with db_open.atomic():
             db.execute_sql("SET session_replication_role = replica;")
-            db.execute_sql("DELETE FROM dim_user WHERE password IS NULL;")
+            db.execute_sql("DELETE FROM dw_track_develop.dim_user WHERE password IS NULL")
             db.drop_tables(tables_to_drop, safe=True, cascade=True)
             db.create_tables(tables_to_create, safe=True)
 
@@ -125,11 +125,22 @@ def insert_data(
                 results[model_class.__name__] = 0
                 continue
 
+            if model_class == DimUser.DimUser:
+                existing_ids_user = {r.id_user for r in model_class.select(model_class.id_user)}
+
+                if 'id_user' in df.columns:
+                    df = df[~df['id_user'].isin(existing_ids_user)]
+
+                if df.empty:
+                    logger.info(f"Nenhum novo registro para inserir em Dim User")
+                    results["tables"][model_class.__name__] = 0
+                    continue
+
             if model_class == FatoCard.FatoCard:
-                existing_ids = {r.id_fato_card for r in model_class.select(model_class.id_fato_card)}
+                existing_ids_fato = {r.id_fato_card for r in model_class.select(model_class.id_fato_card)}
 
                 if 'id_fato_card' in df.columns:
-                    df = df[~df['id_fato_card'].isin(existing_ids)]
+                    df = df[~df['id_fato_card'].isin(existing_ids_fato)]
 
                 if df.empty:
                     logger.info(f"Nenhum novo registro para inserir em FatoCard")
