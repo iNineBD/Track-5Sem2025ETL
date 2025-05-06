@@ -17,7 +17,6 @@ from etl_taiga.models.Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
 from etl_taiga.db.Connection import connect_database, database_config
 from peewee import *
 import pandas as pd
-from functools import partial
 import logging
 
 db = database_config()
@@ -29,13 +28,11 @@ def delete_all_data(db_open):
     Delete all data from the database.
     """
     tables_to_drop = [
-        FatoCard.FatoCard,
         DimCard.DimCard,
         DimTag.DimTag,
         DimTime.DimTime,
         DimStatus.DimStatus,
         DimProject.DimProject,
-        DimUser.DimUser,
         DimRole.DimRole,
         DimDay,
         DimHour,
@@ -46,7 +43,6 @@ def delete_all_data(db_open):
 
     tables_to_create = [
         DimRole.DimRole,
-        DimUser.DimUser,
         DimYear,
         DimMonth,
         DimDay,
@@ -62,6 +58,7 @@ def delete_all_data(db_open):
     try:
         with db_open.atomic():
             db.execute_sql("SET session_replication_role = replica;")
+            db.execute_sql("DELETE FROM dw_track_develop.dim_user WHERE password IS NULL")
             db.drop_tables(tables_to_drop, safe=True, cascade=True)
             db.create_tables(tables_to_create, safe=True)
 
@@ -119,20 +116,36 @@ def insert_data(
     ]
 
     results = {"tables": {}, "status": "success", "total": 0}
-    total_inserted = 0
 
     try:
         # Processar cada inserção na ordem correta
         for model_class, df in insertion_sequence:
-            if df is None:
-                logger.warning(f"DataFrame para {model_class.__name__} é None")
+            if df is None or df.empty:
+                logger.warning(f"DataFrame para {model_class.__name__} esta vazio ou nulo")
                 results[model_class.__name__] = 0
                 continue
 
-            if df.empty:
-                logger.warning(f"DataFrame para {model_class.__name__} está vazio")
-                results[model_class.__name__] = 0
-                continue
+            if model_class == DimUser.DimUser:
+                existing_ids_user = {r.id_user for r in model_class.select(model_class.id_user)}
+
+                if 'id_user' in df.columns:
+                    df = df[~df['id_user'].isin(existing_ids_user)]
+
+                if df.empty:
+                    logger.info(f"Nenhum novo registro para inserir em Dim User")
+                    results["tables"][model_class.__name__] = 0
+                    continue
+
+            if model_class == FatoCard.FatoCard:
+                existing_ids_fato = {r.id_fato_card for r in model_class.select(model_class.id_fato_card)}
+
+                if 'id_fato_card' in df.columns:
+                    df = df[~df['id_fato_card'].isin(existing_ids_fato)]
+
+                if df.empty:
+                    logger.info(f"Nenhum novo registro para inserir em FatoCard")
+                    results["tables"][model_class.__name__] = 0
+                    continue
 
             data = df.replace({pd.NA: None}).to_dict("records")
             inserted = 0
@@ -143,7 +156,6 @@ def insert_data(
                     inserted += len(batch)
 
             logger.info(f"Inseridos {inserted} registros em {model_class.__name__}")
-
             results["tables"][model_class.__name__] = inserted
             results["total"] += inserted
 
@@ -153,5 +165,6 @@ def insert_data(
         logger.error(f"Erro na inserção: {str(e)}", exc_info=True)
         results["status"] = "error"
         results["error"] = str(e)
-        db.rollback()
+        if not db.is_closed():
+            db.rollback()
         return results
