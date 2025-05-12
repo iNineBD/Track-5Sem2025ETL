@@ -9,6 +9,7 @@ import requests
 from etl_taiga.src.services.auth import auth_taiga
 from dotenv import load_dotenv
 import gc
+from prefect import task
 
 load_dotenv()
 
@@ -21,6 +22,7 @@ TOKEN = auth_taiga()
 headers = {"Content-Type": "application/json", "Authorization": f"Bearer {TOKEN}"}
 
 
+@task
 def pipeline_projects():
     """
     Generate a DataFrame for projects.
@@ -41,6 +43,7 @@ def pipeline_projects():
     return df_projects, ids_projects
 
 
+@task
 def pipeline_cards(id_projects):
     """
     Generate a DataFrame for cards.
@@ -225,7 +228,7 @@ def pipeline_cards(id_projects):
     df_roles = df_roles.rename(columns={"id": "id_role", "name": "name_role"})
     df_users = df_users.rename(columns={"id": "id_user", "name": "name_user"})
     df_tags = df_tags.rename(columns={"tag_name": "name_tag"})
-    df_cards["created_date"] = pd.to_datetime(df_cards["created_date"], dayfirst=True)
+    df_cards["created_date"] = pd.to_datetime(df_cards["created_date"])
 
     # garbage collection
     del card
@@ -260,6 +263,7 @@ def pipeline_cards(id_projects):
     return df_cards, df_users, df_tags, df_status, df_roles
 
 
+@task
 def pipeline_transform(df_cards, df_status, df_users, df_roles):
     """
     Transform the data for the ETL pipeline.
@@ -334,6 +338,7 @@ def pipeline_transform(df_cards, df_status, df_users, df_roles):
     )
 
 
+@task
 def pipeline_main():
     """
     Main function to run the ETL pipeline.

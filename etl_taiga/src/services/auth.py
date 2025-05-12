@@ -7,8 +7,7 @@ import os
 import requests
 from dotenv import load_dotenv
 from taiga import TaigaAPI
-
-# %%
+from prefect import task
 
 load_dotenv()
 
@@ -17,7 +16,7 @@ TAIGA_USER = os.getenv("TAIGA_USER")
 TAIGA_PASSWORD = os.getenv("TAIGA_PASSWORD")
 
 
-# %%
+@task
 def auth_taiga():
     """
     Authenticate with Taiga and return the token.

@@ -2,8 +2,11 @@
 import os
 from dotenv import load_dotenv
 from peewee import OperationalError, PostgresqlDatabase
+from prefect import task
+from prefect.cache_policies import NO_CACHE
 
 
+@task
 def database_config():
 
     load_dotenv()
@@ -20,6 +23,7 @@ def database_config():
     return db
 
 
+@task(cache_policy=NO_CACHE)
 def connect_database(db):
     try:
         db = database_config()

@@ -2,6 +2,7 @@
 """
 Methods module for database operations.
 """
+from prefect.cache_policies import NO_CACHE
 
 from etl_taiga.models import (
     DimProject,
@@ -18,11 +19,13 @@ from etl_taiga.db.Connection import connect_database, database_config
 from peewee import *
 import pandas as pd
 import logging
+from prefect import task
 
 db = database_config()
 db_open = connect_database(db)
 
 
+@task(cache_policy=NO_CACHE)
 def delete_all_data(db_open):
     """
     Delete all data from the database.
@@ -58,7 +61,9 @@ def delete_all_data(db_open):
     try:
         with db_open.atomic():
             db.execute_sql("SET session_replication_role = replica;")
-            db.execute_sql("DELETE FROM dw_track_develop.dim_user WHERE password IS NULL")
+            db.execute_sql(
+                "DELETE FROM dw_track_develop.dim_user WHERE password IS NULL"
+            )
             db.drop_tables(tables_to_drop, safe=True, cascade=True)
             db.create_tables(tables_to_create, safe=True)
 
@@ -82,6 +87,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+@task(cache_policy=NO_CACHE)
 def insert_data(
     db,
     df_fact_cards,
@@ -121,15 +127,19 @@ def insert_data(
         # Processar cada inserção na ordem correta
         for model_class, df in insertion_sequence:
             if df is None or df.empty:
-                logger.warning(f"DataFrame para {model_class.__name__} esta vazio ou nulo")
+                logger.warning(
+                    f"DataFrame para {model_class.__name__} esta vazio ou nulo"
+                )
                 results[model_class.__name__] = 0
                 continue
 
             if model_class == DimUser.DimUser:
-                existing_ids_user = {r.id_user for r in model_class.select(model_class.id_user)}
+                existing_ids_user = {
+                    r.id_user for r in model_class.select(model_class.id_user)
+                }
 
-                if 'id_user' in df.columns:
-                    df = df[~df['id_user'].isin(existing_ids_user)]
+                if "id_user" in df.columns:
+                    df = df[~df["id_user"].isin(existing_ids_user)]
 
                 if df.empty:
                     logger.info(f"Nenhum novo registro para inserir em Dim User")
@@ -137,10 +147,12 @@ def insert_data(
                     continue
 
             if model_class == FatoCard.FatoCard:
-                existing_ids_fato = {r.id_fato_card for r in model_class.select(model_class.id_fato_card)}
+                existing_ids_fato = {
+                    r.id_fato_card for r in model_class.select(model_class.id_fato_card)
+                }
 
-                if 'id_fato_card' in df.columns:
-                    df = df[~df['id_fato_card'].isin(existing_ids_fato)]
+                if "id_fato_card" in df.columns:
+                    df = df[~df["id_fato_card"].isin(existing_ids_fato)]
 
                 if df.empty:
                     logger.info(f"Nenhum novo registro para inserir em FatoCard")
