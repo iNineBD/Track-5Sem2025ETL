@@ -2,12 +2,18 @@
 Main module for the ETL pipeline.
 """
 
+from pendulum import interval
+
 #!/usr/bin/env python3
-from etl_taiga.src.services.methods import delete_all_data, insert_data
-from etl_taiga.src.services.get_data import pipeline_main
-from etl_taiga.db.Connection import connect_database, database_config
+from prefect.client.schemas.schedules import IntervalSchedule
 import logging
 from datetime import datetime
+from prefect import flow
+from datetime import timedelta
+
+from etl_taiga.db.Connection import database_config, connect_database
+from etl_taiga.src.services.get_data import pipeline_main
+from etl_taiga.src.services.methods import delete_all_data, insert_data
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,7 +22,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+schedule = IntervalSchedule(interval=timedelta(minutes=10))
 
+
+@flow(name="etl_automatizado")
 def run_etl_process():
     """
     Main ETL process execution function.
@@ -118,10 +127,4 @@ def run_etl_process():
 
 
 if __name__ == "__main__":
-    logger.info("Starting Taiga ETL process")
-    try:
-        run_etl_process()
-        logger.info("ETL process finished successfully")
-    except Exception as e:
-        logger.error(f"ETL process terminated with errors: {str(e)}", exc_info=True)
-        raise SystemExit(1)
+    run_etl_process.serve(name="etl10min", schedule=schedule)
