@@ -2,13 +2,15 @@
 Module for data extraction and transformation.
 """
 
+import gc
 import os
+
 import numpy as np
 import pandas as pd
 import requests
-from etl_taiga.src.services.auth import auth_taiga
 from dotenv import load_dotenv
-import gc
+
+from etl_taiga.src.services.auth import auth_taiga
 
 load_dotenv()
 

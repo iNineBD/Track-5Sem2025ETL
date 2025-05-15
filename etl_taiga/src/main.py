@@ -2,12 +2,14 @@
 Main module for the ETL pipeline.
 """
 
-#!/usr/bin/env python3
-from etl_taiga.src.services.methods import delete_all_data, insert_data
-from etl_taiga.src.services.get_data import pipeline_main
-from etl_taiga.db.Connection import connect_database, database_config
 import logging
 from datetime import datetime
+
+from etl_taiga.db.Connection import connect_database, database_config
+from etl_taiga.src.services.get_data import pipeline_main
+
+# !/usr/bin/env python3
+from etl_taiga.src.services.methods import delete_all_data, insert_data
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,8 +39,8 @@ def run_etl_process():
         logger.info("Starting data extraction and transformation...")
         start_time = datetime.now()
 
-        dataframes = pipeline_main()
-        logger.info(f"Data transformation completed in {datetime.now() - start_time}")
+#        dataframes = pipeline_main()
+#        logger.info(f"Data transformation completed in {datetime.now() - start_time}")
 
         # Step 3: Load data
         logger.info("Starting data loading...")
