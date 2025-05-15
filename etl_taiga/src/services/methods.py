@@ -2,29 +2,23 @@
 """
 Methods module for database operations.
 """
-
 import logging
 
 import pandas as pd
 from peewee import Model, OperationalError, chunked
+from prefect import task
+from prefect.cache_policies import NO_CACHE
 
 from etl_taiga.db.Connection import connect_database, database_config
-from etl_taiga.models import (
-    DimCard,
-    DimProject,
-    DimRole,
-    DimStatus,
-    DimTag,
-    DimTime,
-    DimUser,
-    FatoCard,
-)
+from etl_taiga.models import (DimCard, DimProject, DimRole, DimStatus, DimTag,
+                              DimTime, DimUser, FatoCard)
 from etl_taiga.models.Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
 
 db = database_config()
 db_open = connect_database(db)
 
 
+@task(cache_policy=NO_CACHE)
 def delete_all_data(db_open):
     """
     Delete all data from the database.
@@ -86,6 +80,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+@task(cache_policy=NO_CACHE)
 def insert_data(
     db,
     df_fact_cards,

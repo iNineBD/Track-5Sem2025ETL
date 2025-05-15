@@ -45,7 +45,9 @@ def test_user_role_relationship(setup_database):
     role = DimRole.create(name_role="Gestor")
 
     DimUser.create(name_user="Ana", email="ana@email.com", password="123", id_role=role)
-    DimUser.create(name_user="Bruno", email="bruno@email.com", password="456", id_role=role)
+    DimUser.create(
+        name_user="Bruno", email="bruno@email.com", password="456", id_role=role
+    )
 
     users = list(role.users)
     assert len(users) == 2
