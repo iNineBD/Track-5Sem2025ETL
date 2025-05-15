@@ -3,7 +3,7 @@ name: Python Linting
 on:
     push:
       branches:
-          - '**'  # roda em todos os pushs para qualquer branch
+          - '**'  # roda em todos os pushs para qualquer branch.
 
 jobs:
   lint:
