@@ -37,7 +37,8 @@ jobs:
       - name: Run tests with coverage # Executa Pytest e gera relatório de cobertura em XML (para SonarCloud)
         run: |
           mkdir -p etl_taiga/coverage
-          pytest --cov=etl_taiga --cov-report=xml:coverage/coverage.xml
+          pytest --cov=etl_taiga \
+            --cov-report=xml:etl_taiga/coverage/coverage.xml
 
       - name: SonarCloud Scan # Executa análise no SonarCloud com suporte à cobertura de testes
         uses: SonarSource/sonarqube-scan-action@v2
@@ -48,7 +49,7 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.sources=etl_taiga
             -Dsonar.exclusions=etl_taiga/tests/**
-            -Dsonar.python.coverage.reportPaths=coverage/coverage.xml
+            -Dsonar.python.coverage.reportPaths=etl_taiga/coverage/coverage.xml
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
