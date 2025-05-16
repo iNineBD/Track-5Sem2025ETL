@@ -1,4 +1,5 @@
 from peewee import AutoField, CharField
+
 from etl_taiga.models import BaseModel
 
 

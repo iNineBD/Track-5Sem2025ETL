@@ -1,5 +1,6 @@
-from etl_taiga.models import BaseModel
 from peewee import AutoField, IntegerField
+
+from etl_taiga.models import BaseModel
 
 
 class DimDay(BaseModel):

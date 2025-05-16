@@ -1,11 +1,13 @@
-from dotenv import load_dotenv
 import os
-from peewee import *
+
+from dotenv import load_dotenv
+from peewee import Model
+
 from etl_taiga.db.Connection import database_config
 
 load_dotenv()
 DB_SCHEMA = os.getenv("DB_SCHEMA")
-db = database_config()
+db = database_config.fn()
 
 
 class BaseModel(Model):
