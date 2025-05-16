@@ -40,7 +40,7 @@ jobs:
           pytest --cov=etl_taiga --cov-report=xml:coverage/coverage.xml
 
       - name: SonarCloud Scan # Executa análise no SonarCloud com suporte à cobertura de testes
-        uses: SonarSource/sonarcloud-github-action@v2
+        uses: SonarSource/sonarcloud-github-action@v5
         with:
           args: >
             -Dsonar.projectKey=iNineBD_Track-5Sem2025ETL
