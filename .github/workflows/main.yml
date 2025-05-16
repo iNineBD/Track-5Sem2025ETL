@@ -37,8 +37,15 @@ jobs:
       - name: Run tests with coverage # Executa Pytest e gera relatório de cobertura em XML (para SonarCloud)
         run: |
           pytest --cov=etl_taiga \
-                 --cov-report=xml \
+                 --cov-report=xml:coverage.xml \
                  --cov-report=term
+
+      - name: Check coverage.xml existence # Para garantir que o arquivo foi mesmo gerado
+        run: |
+          if [ ! -f coverage.xml ]; then
+            echo "coverage.xml not found!"
+            exit 1
+          fi
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v2
