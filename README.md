@@ -55,5 +55,3 @@ pytest --disable-warnings --cov=etl_taiga --cov-report=html:coverage_report --co
 ## Additional Information
 
 This project is part of an academic initiative and is tailored for educational purposes. Contributions and feedback are welcome!
-
-:)
