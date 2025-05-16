@@ -50,6 +50,7 @@ jobs:
             -Dsonar.sources=etl_taiga
             -Dsonar.exclusions=etl_taiga/tests/**
             -Dsonar.python.coverage.reportPaths=etl_taiga/coverage/coverage.xml
+            -Dsonar.python.version=3.10
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
