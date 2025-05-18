@@ -9,7 +9,8 @@ import requests
 from etl_taiga.src.services.auth import auth_taiga
 from dotenv import load_dotenv
 import gc
-from prefect import task
+from prefect import task,flow
+from requests.auth import HTTPBasicAuth
 
 load_dotenv()
 
@@ -17,10 +18,12 @@ TAIGA_HOST = os.getenv("TAIGA_HOST")
 TAIGA_USER = os.getenv("TAIGA_USER")
 TAIGA_PASSWORD = os.getenv("TAIGA_PASSWORD")
 TAIGA_MEMBER = os.getenv("TAIGA_MEMBER")
+JIRA_HOST = os.getenv("JIRA_HOST")
+JIRA_USER = os.getenv("JIRA_USER")
+JIRA_TOKEN = os.getenv("JIRA_TOKEN")
 TOKEN = auth_taiga()
 
 headers = {"Content-Type": "application/json", "Authorization": f"Bearer {TOKEN}"}
-
 
 @task
 def pipeline_projects():
@@ -42,13 +45,31 @@ def pipeline_projects():
     ids_projects = df_projects["id_project"].tolist()
     return df_projects, ids_projects
 
-
 @task
 def pipeline_cards(id_projects):
     """
     Generate a DataFrame for cards.
     """
+    jql = 'issuetype=Epic'
+
     url_cards = f"{TAIGA_HOST}/userstories?project="
+    url_cards_jira = f"https://{JIRA_HOST}/rest/api/3/search"
+
+    params = {
+        "jql": jql,
+        "maxResults": 100
+    }
+    auth = HTTPBasicAuth(JIRA_USER, JIRA_TOKEN)
+    headers_jira = {
+        "Accept": "application/json"
+    }
+
+    response_jira = requests.get(
+        url_cards_jira,
+        headers=headers_jira,
+        params=params,
+        auth=auth
+    )
 
     id_cards = []
     df_cards = pd.DataFrame(
@@ -338,7 +359,7 @@ def pipeline_transform(df_cards, df_status, df_users, df_roles):
     )
 
 
-@task
+@flow
 def pipeline_main():
     """
     Main function to run the ETL pipeline.
