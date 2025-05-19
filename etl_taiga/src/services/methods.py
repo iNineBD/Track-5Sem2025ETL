@@ -13,6 +13,7 @@ from etl_taiga.models import (
     DimStatus,
     FatoCard,
     DimTime,
+    DimPlatform
 )
 from etl_taiga.models.Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
 from etl_taiga.db.Connection import connect_database, database_config
@@ -42,6 +43,7 @@ def delete_all_data(db_open):
         DimMinute,
         DimMonth,
         DimYear,
+        DimPlatform.DimPlatform
     ]
 
     tables_to_create = [
@@ -52,6 +54,7 @@ def delete_all_data(db_open):
         DimHour,
         DimMinute,
         DimStatus.DimStatus,
+        DimPlatform.DimPlatform,
         DimProject.DimProject,
         DimTag.DimTag,
         DimTime.DimTime,
@@ -91,6 +94,7 @@ logger = logging.getLogger(__name__)
 def insert_data(
     db,
     df_fact_cards,
+    df_platform,
     df_projects,
     df_dim_cards,
     df_status,
@@ -114,6 +118,7 @@ def insert_data(
         (DimHour, df_dim_hour),
         (DimMinute, df_dim_minute),
         (DimStatus.DimStatus, df_status),
+        (DimPlatform.DimPlatform, df_platform),
         (DimProject.DimProject, df_projects),
         (DimTag.DimTag, df_tags),
         (DimTime.DimTime, df_dim_time),
