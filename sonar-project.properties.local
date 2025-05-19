@@ -1,0 +1,23 @@
+# Identificação do projeto - SONARQUBE LOCAL, DOCKER
+sonar.projectKey=iNineBD_Track-5Sem2025ETL
+sonar.organization=ininetrack
+sonar.projectName=Track-5Sem2025ETL
+sonar.projectVersion=1.0
+
+# Código-fonte
+sonar.sources=etl_taiga
+
+# Codificação e linguagem
+sonar.sourceEncoding=UTF-8
+
+# Caminho do relatório de cobertura (gerado por pytest-cov)
+sonar.python.coverage.reportPaths=coverage.xml
+
+# Ignorar os arquivos de teste
+sonar.exclusions=etl_taiga/tests/**
+
+# URL do SonarQube
+sonar.host.url=http://localhost:9001
+
+# Token de autenticação
+sonar.login=sqa_841dbc7f17f32ea9b448979149fc7afca7978d28
