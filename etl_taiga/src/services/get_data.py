@@ -120,79 +120,74 @@ def pipeline_cards(id_projects):
     """
     url_cards = f"{TAIGA_HOST}/userstories?project="
 
-    jql = 'issuetype=Feature'
-    url_cards_jira = f"https://{JIRA_HOST}/rest/api/3/search"
-    params = {
-        "jql": jql,
-        "maxResults": 100
-    }
-    auth = HTTPBasicAuth(JIRA_USER, JIRA_TOKEN)
-    headers_jira = {
-        "Accept": "application/json"
-    }
-    response = requests.get(
-        url_cards_jira,
-        headers=headers_jira,
-        params=params,
-        auth=auth
-    )
-
-    data = response.json()
-
-    ids = []
-    summaries_jira = []
-    descriptions_jira = []
-    date = []
-
-    for issue in data.get("issues", []):
-        issue_id = issue.get("id")
-        summary = issue.get("fields", {}).get("summary", "")
-        description_obj = issue.get("fields", {}).get("description", {})
-
-        sprint_info = issue.get("fields", {}).get("customfield_10020", [])
-        start_date = ""
-        if sprint_info and isinstance(sprint_info, list):
-            raw_date = sprint_info[0].get("startDate", "")
-            if raw_date:
-                dt = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
-                start_date = dt.strftime("%Y-%m-%d %H:%M")
-
-        content = description_obj.get("content", [])
-        description = ""
-
-        for i, block in enumerate(content):
-            if block.get("type") == "heading":
-                # Formato 1: Heading separado
-                textos = block.get("content", [])
-                if any(t.get("text", "").strip() == "🎯 Objetivo:" for t in textos):
-                    # Pega o parágrafo seguinte
-                    for next_block in content[i + 1:]:
-                        if next_block.get("type") == "paragraph":
+    def get_jira_data():
+        jql = 'issuetype=Feature'
+        url_cards_jira = f"https://{JIRA_HOST}/rest/api/3/search"
+        params = {
+            "jql": jql,
+            "maxResults": 100
+        }
+        auth = HTTPBasicAuth(JIRA_USER, JIRA_TOKEN)
+        headers_jira = {
+            "Accept": "application/json"
+        }
+        response = requests.get(
+            url_cards_jira,
+            headers=headers_jira,
+            params=params,
+            auth=auth
+        )
+        data = response.json()
+        ids = []
+        summaries_jira = []
+        descriptions_jira = []
+        date = []
+        for issue in data.get("issues", []):
+            issue_id = issue.get("id")
+            summary = issue.get("fields", {}).get("summary", "")
+            description_obj = issue.get("fields", {}).get("description", {})
+            sprint_info = issue.get("fields", {}).get("customfield_10020", [])
+            start_date = ""
+            if sprint_info and isinstance(sprint_info, list):
+                raw_date = sprint_info[0].get("startDate", "")
+                if raw_date:
+                    dt = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
+                    start_date = dt.strftime("%Y-%m-%d %H:%M")
+            content = description_obj.get("content", [])
+            description = ""
+            for i, block in enumerate(content):
+                if block.get("type") == "heading":
+                    # Formato 1: Heading separado
+                    textos = block.get("content", [])
+                    if any(t.get("text", "").strip() == "🎯 Objetivo:" for t in textos):
+                        # Pega o parágrafo seguinte
+                        for next_block in content[i + 1:]:
+                            if next_block.get("type") == "paragraph":
+                                description = " ".join(
+                                    t.get("text", "") for t in next_block.get("content", []) if t.get("type") == "text"
+                                ).strip()
+                                break
+                        break
+                elif block.get("type") == "paragraph":
+                    # Formato 2: Tudo no mesmo parágrafo
+                    texts = block.get("content", [])
+                    for j, t in enumerate(texts):
+                        if t.get("text", "").strip() == "Objetivo:":
+                            # Junta os textos após "Objetivo:"
+                            following_texts = texts[j + 2:]  # pula o hardBreak
                             description = " ".join(
-                                t.get("text", "") for t in next_block.get("content", []) if t.get("type") == "text"
+                                t.get("text", "") for t in following_texts if t.get("type") == "text"
                             ).strip()
                             break
-                    break
-
-            elif block.get("type") == "paragraph":
-                # Formato 2: Tudo no mesmo parágrafo
-                texts = block.get("content", [])
-                for j, t in enumerate(texts):
-                    if t.get("text", "").strip() == "Objetivo:":
-                        # Junta os textos após "Objetivo:"
-                        following_texts = texts[j + 2:]  # pula o hardBreak
-                        description = " ".join(
-                            t.get("text", "") for t in following_texts if t.get("type") == "text"
-                        ).strip()
+                    if description:
                         break
-                if description:
-                    break
+            ids.append(issue_id)
+            summaries_jira.append(summary)
+            descriptions_jira.append(description)
+            date.append(start_date)
+        return ids, summaries_jira, descriptions_jira, date
 
-        ids.append(issue_id)
-        summaries_jira.append(summary)
-        descriptions_jira.append(description)
-        date.append(start_date)
-
+    ids, summaries_jira, descriptions_jira, date = get_jira_data()
 
     id_cards = []
     df_cards = pd.DataFrame(
@@ -369,6 +364,12 @@ def pipeline_cards(id_projects):
             "status": "id_status",
         }
     )
+    temp_df = pd.DataFrame({
+        'id_card': ids,
+        'name_card': summaries_jira,
+        'description': descriptions_jira,
+    })
+
     df_roles = df_roles.rename(columns={"id": "id_role", "name": "name_role"})
     df_users = df_users.rename(columns={"id": "id_user", "name": "name_user"})
     df_tags = df_tags.rename(columns={"tag_name": "name_tag"})
