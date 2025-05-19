@@ -36,25 +36,9 @@ def pipeline_projects():
     response.raise_for_status()
 
     projects = response.json()
-    campos = ["id", "name", "description"]  # inclua 'id' aqui
-    df_projects = pd.DataFrame(projects)[campos].reset_index(drop=True)
 
-    df_projects.rename(
-        columns={"id": "id_project", "name": "name_project"}, inplace=True
-    )
-    ids_projects = df_projects["id_project"].tolist()
-    return df_projects, ids_projects
-
-@task
-def pipeline_cards(id_projects):
-    """
-    Generate a DataFrame for cards.
-    """
     jql = 'issuetype=Epic'
-
-    url_cards = f"{TAIGA_HOST}/userstories?project="
-    url_cards_jira = f"https://{JIRA_HOST}/rest/api/3/search"
-
+    url_projects_jira = f"https://{JIRA_HOST}/rest/api/3/search"
     params = {
         "jql": jql,
         "maxResults": 100
@@ -63,13 +47,77 @@ def pipeline_cards(id_projects):
     headers_jira = {
         "Accept": "application/json"
     }
-
-    response_jira = requests.get(
-        url_cards_jira,
+    response = requests.get(
+        url_projects_jira,
         headers=headers_jira,
         params=params,
         auth=auth
     )
+
+    data = response.json()
+
+    ids = []
+    summaries_jira = []
+    descriptions_jira = []
+
+    for issue in data.get("issues", []):
+        issue_id = issue.get("id")
+        summary = issue.get("fields", {}).get("summary", "")
+
+        desc_obj = issue.get("fields", {}).get("description", {})
+        paragraphs = desc_obj.get("content", [])
+        last_description = ""
+
+        paragraph_contents = [
+            paragraph.get("content", [])
+            for paragraph in paragraphs
+            if paragraph.get("type") == "paragraph"
+        ]
+
+        all_texts = []
+        for content in paragraph_contents:
+            for item in content:
+                if item.get("type") == "text":
+                    all_texts.append(item.get("text", ""))
+        if all_texts:
+            last_description = all_texts[-1]
+
+        ids.append(issue_id)
+        summaries_jira.append(summary)
+        descriptions_jira.append(last_description)
+
+    campos = ["id", "name", "description"]
+    df_projects = pd.DataFrame(projects)[campos].reset_index(drop=True)
+    df_projects['id_platorm'] = 1
+
+    df_projects.rename(
+        columns={"id": "id_project", "name": "name_project"}, inplace=True
+    )
+    ids_projects = df_projects["id_project"].tolist()
+
+    temp_df= pd.DataFrame({
+        'id_project': ids,
+        'name_project': summaries_jira,
+        'description': descriptions_jira,
+        'id_platorm': 2
+    })
+
+    df_projects = pd.concat([df_projects, temp_df], ignore_index=True)
+    df_platform = pd.DataFrame(
+        {
+            "id_platform": [1, 2],
+            "name_platform": ["Taiga", "Jira"],
+        }
+    )
+
+    return df_projects, ids_projects,df_platform
+
+@task
+def pipeline_cards(id_projects):
+    """
+    Generate a DataFrame for cards.
+    """
+    url_cards = f"{TAIGA_HOST}/userstories?project="
 
     id_cards = []
     df_cards = pd.DataFrame(
@@ -365,7 +413,7 @@ def pipeline_main():
     Main function to run the ETL pipeline.
     """
     # chamando as funções
-    df_projects, ids_projects = pipeline_projects()
+    df_projects, ids_projects,df_platform = pipeline_projects()
     df_cards, df_users, df_tags, df_status, df_roles = pipeline_cards(ids_projects)
     dim_time, dim_day, dim_month, dim_year, dim_hour, dim_minute, df_cards, df_users = (
         pipeline_transform(df_cards, df_status, df_users, df_roles)
@@ -413,6 +461,7 @@ def pipeline_main():
 
     return (
         fato_cards,
+        df_platform,
         df_projects,
         df_cards,
         df_status,
