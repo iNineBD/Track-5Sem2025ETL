@@ -118,7 +118,6 @@ def pipeline_projects():
             "name_platform": ["Taiga", "Jira"],
         }
     )
-
     return df_projects, ids_projects,df_platform
 
 @task
@@ -145,11 +144,32 @@ def pipeline_cards(id_projects):
             params=params,
             auth=auth
         )
+
         data = response.json()
         ids = []
         summaries_jira = []
         descriptions_jira = []
         date = []
+
+        id_status = []
+        name_status = []
+
+        id_user = []
+        name_user = []
+        email_user = []
+
+        name_tag = []
+
+        email_eduardo = os.getenv("EMAIL_EDUARDO")
+        email_ana = os.getenv("EMAIL_ANA")
+        email_lucas = os.getenv("EMAIL_LUCAS")
+        email_andre = os.getenv("EMAIL_ANDRE")
+        email_ali = os.getenv("EMAIL_ALI")
+        email_alita = os.getenv("EMAIL_ALITA")
+        email_william = os.getenv("EMAIL_WILLIAM")
+
+        list_ids_epics = []
+
         for issue in data.get("issues", []):
             issue_id = issue.get("id")
             summary = issue.get("fields", {}).get("summary", "")
