@@ -41,3 +41,18 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=iNineBD_Track-5Sem2025ETL
+            -Dsonar.organization=ininetrack
+            -Dsonar.projectName=Track-5Sem2025ETL
+            -Dsonar.projectVersion=1.0
+            -Dsonar.sources=etl_taiga
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.exclusions=etl_taiga/tests/**
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
+            -Dsonar.verbose=true
