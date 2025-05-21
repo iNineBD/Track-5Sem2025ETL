@@ -175,12 +175,18 @@ def pipeline_cards(id_projects):
             summary = issue.get("fields", {}).get("summary", "")
             description_obj = issue.get("fields", {}).get("description", {})
             sprint_info = issue.get("fields", {}).get("customfield_10020", [])
+            status = issue.get("fields", {}).get("status", {})
+            user = issue.get("fields", {}).get("assignee", {})
+            tags = issue.get("fields", {}).get("labels", [])
+            epic_link = issue.get("fields", {}).get("parent", {})
+
+            names_tags = [tag for tag in tags if isinstance(tag, str)]
+
             start_date = ""
             if sprint_info and isinstance(sprint_info, list):
                 raw_date = sprint_info[0].get("startDate", "")
                 if raw_date:
-                    dt = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
-                    start_date = dt.strftime("%Y-%m-%d %H:%M")
+                    start_date = datetime.strptime(raw_date, "%Y-%m-%dT%H:%M:%S.%f%z")
             content = description_obj.get("content", [])
             description = ""
             for i, block in enumerate(content):
@@ -209,13 +215,45 @@ def pipeline_cards(id_projects):
                             break
                     if description:
                         break
+            status_id = status.get("id")
+            status_name = status.get("name")
+
+            user_id = user.get("accountId")
+            user_name = user.get("displayName")
+
             ids.append(issue_id)
             summaries_jira.append(summary)
             descriptions_jira.append(description)
             date.append(start_date)
-        return ids, summaries_jira, descriptions_jira, date
+
+            id_status.append(status_id)
+            name_status.append(status_name)
 
     ids, summaries_jira, descriptions_jira, date = get_jira_data()
+            id_user.append(user_id)
+            name_user.append(user_name)
+            match user_name:
+                case "Eduardo Farias de Paula":
+                    email_user.append(email_eduardo)
+                case "Ana Sasaki" | "Ana Raquel Yamamoto Sasaki Machado":
+                    email_user.append(email_ana)
+                case "Lucas Henrique":
+                    email_user.append(email_lucas)
+                case "André Luiz Bernardes de Oliveira" | "andre.oliveira138":
+                    email_user.append(email_andre)
+                case "Ali Mohamed Khodr":
+                    email_user.append(email_ali)
+                case "Alita Amancio":
+                    email_user.append(email_alita)
+                case "William David Antoniazzi":
+                    email_user.append(email_william)
+            name_tag.append(names_tags)
+            list_ids_epics.append(epic_link.get("id"))
+
+
+        return ids, summaries_jira, descriptions_jira, date, id_status, name_status, id_user, name_user, email_user, name_tag,list_ids_epics
+
+    ids, summaries_jira, descriptions_jira, date, id_status, name_status, id_user, name_user, email_user, name_tag,list_ids_epics = get_jira_data()
 
     id_cards = []
     df_cards = pd.DataFrame(
