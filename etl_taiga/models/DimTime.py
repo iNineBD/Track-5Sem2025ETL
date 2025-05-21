@@ -1,6 +1,8 @@
-from .Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
-from peewee import AutoField, IntegerField, DateField, ForeignKeyField
+from peewee import AutoField, DateField, ForeignKeyField, IntegerField
+
 from etl_taiga.models import BaseModel
+
+from .Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
 
 
 class DimTime(BaseModel):

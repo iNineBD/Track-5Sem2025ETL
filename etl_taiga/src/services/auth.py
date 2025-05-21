@@ -4,10 +4,11 @@ Module for authentication with Taiga API.
 """
 
 import os
+
 import requests
 from dotenv import load_dotenv
-from taiga import TaigaAPI
 from prefect import task
+from taiga import TaigaAPI
 
 load_dotenv()
 

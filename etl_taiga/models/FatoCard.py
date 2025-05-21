@@ -1,11 +1,12 @@
+from peewee import AutoField, ForeignKeyField, IntegerField
+
+from etl_taiga.models import BaseModel
 from etl_taiga.models.DimCard import DimCard
 from etl_taiga.models.DimProject import DimProject
 from etl_taiga.models.DimStatus import DimStatus
 from etl_taiga.models.DimTag import DimTag
 from etl_taiga.models.DimTime import DimTime
 from etl_taiga.models.DimUser import DimUser
-from peewee import AutoField, IntegerField, ForeignKeyField
-from etl_taiga.models import BaseModel
 
 
 class FatoCard(BaseModel):

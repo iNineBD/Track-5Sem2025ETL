@@ -1,6 +1,8 @@
 from peewee import AutoField, CharField, ForeignKeyField
-from . import BaseModel
+
 from etl_taiga.models.DimRole import DimRole
+
+from . import BaseModel
 
 
 class DimUser(BaseModel):

@@ -2,24 +2,17 @@
 """
 Methods module for database operations.
 """
+import logging
+
+import pandas as pd
+from peewee import Model, OperationalError, chunked
+from prefect import task
 from prefect.cache_policies import NO_CACHE
 
-from etl_taiga.models import (
-    DimProject,
-    DimCard,
-    DimRole,
-    DimUser,
-    DimTag,
-    DimStatus,
-    FatoCard,
-    DimTime,
-)
-from etl_taiga.models.Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
 from etl_taiga.db.Connection import connect_database, database_config
-from peewee import *
-import pandas as pd
-import logging
-from prefect import task
+from etl_taiga.models import (DimCard, DimProject, DimRole, DimStatus, DimTag,
+                              DimTime, DimUser, FatoCard)
+from etl_taiga.models.Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
 
 db = database_config()
 db_open = connect_database(db)
@@ -142,7 +135,7 @@ def insert_data(
                     df = df[~df["id_user"].isin(existing_ids_user)]
 
                 if df.empty:
-                    logger.info(f"Nenhum novo registro para inserir em Dim User")
+                    logger.info("Nenhum novo registro para inserir em Dim User")
                     results["tables"][model_class.__name__] = 0
                     continue
 
@@ -155,7 +148,7 @@ def insert_data(
                     df = df[~df["id_fato_card"].isin(existing_ids_fato)]
 
                 if df.empty:
-                    logger.info(f"Nenhum novo registro para inserir em FatoCard")
+                    logger.info("Nenhum novo registro para inserir em FatoCard")
                     results["tables"][model_class.__name__] = 0
                     continue
 
