@@ -229,7 +229,6 @@ def pipeline_cards(id_projects):
             id_status.append(status_id)
             name_status.append(status_name)
 
-    ids, summaries_jira, descriptions_jira, date = get_jira_data()
             id_user.append(user_id)
             name_user.append(user_name)
             match user_name:
@@ -276,7 +275,7 @@ def pipeline_cards(id_projects):
     tag_map = {}
     next_tag_id = 1
 
-    for project_id in id_projects:
+    for project_id in id_projects[:3]:
         # Obter cards do projeto
         response = requests.get(f"{url_cards}{project_id}", headers=headers, timeout=10)
         response.raise_for_status()
@@ -392,7 +391,7 @@ def pipeline_cards(id_projects):
     url_users = f"{TAIGA_HOST}/memberships?project="
     df_roles = pd.DataFrame(columns=["id", "name"])
 
-    for id_project in id_projects:
+    for id_project in id_projects[:3]:
         response = requests.get(f"{url_users}{id_project}", headers=headers, timeout=10)
         response.raise_for_status()
         users = response.json()
@@ -430,11 +429,6 @@ def pipeline_cards(id_projects):
             "status": "id_status",
         }
     )
-    temp_df = pd.DataFrame({
-        'id_card': ids,
-        'name_card': summaries_jira,
-        'description': descriptions_jira,
-    })
 
     df_roles = df_roles.rename(columns={"id": "id_role", "name": "name_role"})
     df_users = df_users.rename(columns={"id": "id_user", "name": "name_user"})
