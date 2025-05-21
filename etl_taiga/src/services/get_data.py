@@ -99,6 +99,10 @@ def pipeline_projects():
         columns={"id": "id_project", "name": "name_project"}, inplace=True
     )
     ids_projects = df_projects["id_project"].tolist()
+    # transforma ids em int
+    ids = [int(i) for i in ids]
+    ids_projects += ids
+
 
     temp_df= pd.DataFrame({
         'id_project': ids,
