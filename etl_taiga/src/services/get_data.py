@@ -103,14 +103,14 @@ def pipeline_projects():
     ids = [int(i) for i in ids]
     ids_projects += ids
 
-
-    temp_df= pd.DataFrame({
-        'id_project': ids,
-        'name_project': summaries_jira,
-        'description': descriptions_jira,
-        'id_platorm': 2
-    })
+    temp_df = pd.DataFrame(
+        {
+            "id_project": ids,
+            "name_project": summaries_jira,
+            "description": descriptions_jira,
             "id_platform": 2,
+        }
+    )
 
     df_projects = pd.concat([df_projects, temp_df], ignore_index=True)
     df_platform = pd.DataFrame(
@@ -297,7 +297,40 @@ def pipeline_cards(id_projects):
         list_ids_epics_jira,
     ) = get_jira_data()
 
-    ids, summaries_jira, descriptions_jira, date, id_status, name_status, id_user, name_user, email_user, name_tag,list_ids_epics = get_jira_data()
+    dados_expandidos = []
+    for i in range(len(id_cards_jira)):
+        for tag in name_tag_jira[i]:
+            dados_expandidos.append(
+                {
+                    "id": id_cards_jira[i],
+                    "assigned_to": id_user_jira[i],
+                    "tags": tag,
+                    "subject": names_cards_jira[i],
+                    "description": descriptions_jira[i],
+                    "created_date": created_date_cards[i],
+                    "status": name_status_jira[i],
+                    "project": list_ids_epics_jira[i],
+                }
+            )
+
+    df_cards_jira = pd.DataFrame(dados_expandidos)
+    df_users_jira = pd.DataFrame(
+        {
+            "id": id_user_jira,
+            "name": name_user_jira,
+            "email": email_user_jira,
+            "password": None,
+            "name_role": "Gestor",
+        }
+    )
+    id_roles_jira1 = [9989571]
+    df_roles_jira = pd.DataFrame({"id": id_roles_jira1, "name": "Gestor"})
+    df_tags_jira = pd.DataFrame(
+        {"tags": name_tag_jira, "id": [i for i in range(1, len(name_tag_jira) + 1)]}
+    )
+    df_status_jira = pd.DataFrame(
+        {"id_status": id_status_jira, "name_status": name_status_jira}
+    )
 
     id_cards = []
     df_cards = pd.DataFrame(
