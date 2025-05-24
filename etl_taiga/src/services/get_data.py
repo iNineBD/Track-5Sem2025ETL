@@ -497,6 +497,12 @@ def pipeline_cards(id_projects):
                     ignore_index=True,
                 )
 
+    # juntando os dataframes
+    df_cards = pd.concat([df_cards, df_cards_jira], ignore_index=True)
+    df_users = pd.concat([df_users, df_users_jira], ignore_index=True)
+    df_tags = pd.concat([df_tags, df_tags_jira], ignore_index=True)
+    df_status = pd.concat([df_status, df_status_jira], ignore_index=True)
+
     tag_map = dict(zip(df_tags["tags"], df_tags["id"]))
     df_cards["tags"] = df_cards["tags"].map(tag_map)
     # convertir tags para int
