@@ -13,7 +13,7 @@ from pydantic.networks import email_validator
 from etl_taiga.src.services.auth import auth_taiga
 from dotenv import load_dotenv
 import gc
-from prefect import task,flow
+from prefect import task, flow
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
 
@@ -30,6 +30,7 @@ TOKEN = auth_taiga()
 
 headers = {"Content-Type": "application/json", "Authorization": f"Bearer {TOKEN}"}
 
+
 @task
 def pipeline_projects():
     """
@@ -42,21 +43,13 @@ def pipeline_projects():
 
     projects = response.json()
 
-    jql = 'issuetype=Epic'
+    jql = "issuetype=Epic"
     url_projects_jira = f"https://{JIRA_HOST}/rest/api/3/search"
-    params = {
-        "jql": jql,
-        "maxResults": 100
-    }
+    params = {"jql": jql, "maxResults": 100}
     auth = HTTPBasicAuth(JIRA_USER, JIRA_TOKEN)
-    headers_jira = {
-        "Accept": "application/json"
-    }
+    headers_jira = {"Accept": "application/json"}
     response = requests.get(
-        url_projects_jira,
-        headers=headers_jira,
-        params=params,
-        auth=auth
+        url_projects_jira, headers=headers_jira, params=params, auth=auth
     )
 
     data = response.json()
@@ -119,7 +112,8 @@ def pipeline_projects():
             "name_platform": ["Taiga", "Jira"],
         }
     )
-    return df_projects, ids_projects,df_platform
+    return df_projects, ids_projects, df_platform
+
 
 @task
 def pipeline_cards(id_projects):
@@ -129,21 +123,13 @@ def pipeline_cards(id_projects):
     url_cards = f"{TAIGA_HOST}/userstories?project="
 
     def get_jira_data():
-        jql = 'issuetype=Feature'
+        jql = "issuetype=Feature"
         url_cards_jira = f"https://{JIRA_HOST}/rest/api/3/search"
-        params = {
-            "jql": jql,
-            "maxResults": 100
-        }
+        params = {"jql": jql, "maxResults": 100}
         auth = HTTPBasicAuth(JIRA_USER, JIRA_TOKEN)
-        headers_jira = {
-            "Accept": "application/json"
-        }
+        headers_jira = {"Accept": "application/json"}
         response = requests.get(
-            url_cards_jira,
-            headers=headers_jira,
-            params=params,
-            auth=auth
+            url_cards_jira, headers=headers_jira, params=params, auth=auth
         )
 
         data = response.json()
@@ -196,10 +182,12 @@ def pipeline_cards(id_projects):
                     textos = block.get("content", [])
                     if any(t.get("text", "").strip() == "🎯 Objetivo:" for t in textos):
                         # Pega o parágrafo seguinte
-                        for next_block in content[i + 1:]:
+                        for next_block in content[i + 1 :]:
                             if next_block.get("type") == "paragraph":
                                 description = " ".join(
-                                    t.get("text", "") for t in next_block.get("content", []) if t.get("type") == "text"
+                                    t.get("text", "")
+                                    for t in next_block.get("content", [])
+                                    if t.get("type") == "text"
                                 ).strip()
                                 break
                         break
@@ -209,9 +197,11 @@ def pipeline_cards(id_projects):
                     for j, t in enumerate(texts):
                         if t.get("text", "").strip() == "Objetivo:":
                             # Junta os textos após "Objetivo:"
-                            following_texts = texts[j + 2:]  # pula o hardBreak
+                            following_texts = texts[j + 2 :]  # pula o hardBreak
                             description = " ".join(
-                                t.get("text", "") for t in following_texts if t.get("type") == "text"
+                                t.get("text", "")
+                                for t in following_texts
+                                if t.get("type") == "text"
                             ).strip()
                             break
                     if description:
@@ -251,6 +241,7 @@ def pipeline_cards(id_projects):
                     id_user.append(7581)
 
             name_user.append(user_name)
+
             match user_name:
                 case "Eduardo Farias de Paula":
                     email_user.append(email_eduardo)
@@ -643,7 +634,7 @@ def pipeline_main():
     Main function to run the ETL pipeline.
     """
     # chamando as funções
-    df_projects, ids_projects,df_platform = pipeline_projects()
+    df_projects, ids_projects, df_platform = pipeline_projects()
     df_cards, df_users, df_tags, df_status, df_roles = pipeline_cards(ids_projects)
     dim_time, dim_day, dim_month, dim_year, dim_hour, dim_minute, df_cards, df_users = (
         pipeline_transform(df_cards, df_status, df_users, df_roles)
