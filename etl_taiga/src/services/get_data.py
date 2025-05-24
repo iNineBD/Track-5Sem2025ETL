@@ -444,6 +444,15 @@ def pipeline_cards(id_projects):
                     ignore_index=True,
                 )
 
+    df_cards_jira = df_cards_jira.drop_duplicates().reset_index(drop=True)
+    df_users_jira = df_users_jira.drop_duplicates().reset_index(drop=True)
+    df_tags_jira = df_tags_jira.explode("tags").reset_index(drop=True)
+    df_tags_jira["id"] = df_tags_jira.index + 1
+    df_tags_jira = df_tags_jira.drop_duplicates("tags").reset_index(drop=True)
+    df_status_jira = df_status_jira.drop_duplicates(subset="name_status").reset_index(
+        drop=True
+    )
+
     df_cards = df_cards.drop_duplicates().reset_index(drop=True)
     df_users = df_users.drop_duplicates().reset_index(drop=True)
     df_tags = df_tags.drop_duplicates().dropna().reset_index(drop=True)
