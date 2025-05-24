@@ -526,6 +526,7 @@ def pipeline_cards(id_projects):
     df_roles = df_roles.rename(columns={"id": "id_role", "name": "name_role"})
     df_users = df_users.rename(columns={"id": "id_user", "name": "name_user"})
     df_tags = df_tags.rename(columns={"tag_name": "name_tag"})
+    df_tags["id_tag"] = df_tags.index + 1
     df_cards["created_date"] = pd.to_datetime(df_cards["created_date"])
 
     # garbage collection
