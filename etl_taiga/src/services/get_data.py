@@ -93,7 +93,7 @@ def pipeline_projects():
 
     campos = ["id", "name", "description"]
     df_projects = pd.DataFrame(projects)[campos].reset_index(drop=True)
-    df_projects['id_platorm'] = 1
+    df_projects["id_platform"] = 1
 
     df_projects.rename(
         columns={"id": "id_project", "name": "name_project"}, inplace=True
@@ -110,6 +110,7 @@ def pipeline_projects():
         'description': descriptions_jira,
         'id_platorm': 2
     })
+            "id_platform": 2,
 
     df_projects = pd.concat([df_projects, temp_df], ignore_index=True)
     df_platform = pd.DataFrame(
@@ -229,7 +230,26 @@ def pipeline_cards(id_projects):
             id_status.append(status_id)
             name_status.append(status_name)
 
-            id_user.append(user_id)
+            match user_id:
+                case "5e5db537924db10e74b99375":
+                    id_user.append(9213)
+                case "712020:e4f1fb1e-ed01-454e-a9eb-8b2110059369":
+                    id_user.append(8792)
+                case "712020:98cd64cb-a18e-4b2b-a977-b77d8cfac0be":
+                    id_user.append(7789)
+                case "712020:077a4a58-accf-415e-9a84-5eb1b08f84d8":
+                    id_user.append(9641)
+                case "712020:c659f9f4-bf69-4f33-9b15-90be6d5827a7":
+                    id_user.append(7853)
+                case "641b8c4ec35660c269bbdc63":
+                    id_user.append(8859)
+                case "712020:9ff23b96-b188-4323-ad6c-07624f277469":
+                    id_user.append(7462)
+                case "712020:4d31b488-0fd1-4ddc-9b2c-7803d8447304":
+                    id_user.append(7846)
+                case "712020:ce02dea9-3abf-4db6-858d-9e3badcb887b":
+                    id_user.append(7581)
+
             name_user.append(user_name)
             match user_name:
                 case "Eduardo Farias de Paula":
@@ -249,8 +269,33 @@ def pipeline_cards(id_projects):
             name_tag.append(names_tags)
             list_ids_epics.append(epic_link.get("id"))
 
+        return (
+            ids,
+            summaries_jira,
+            descriptions_jira,
+            date,
+            id_status,
+            name_status,
+            id_user,
+            name_user,
+            email_user,
+            name_tag,
+            list_ids_epics,
+        )
 
-        return ids, summaries_jira, descriptions_jira, date, id_status, name_status, id_user, name_user, email_user, name_tag,list_ids_epics
+    (
+        id_cards_jira,
+        names_cards_jira,
+        descriptions_jira,
+        created_date_cards,
+        id_status_jira,
+        name_status_jira,
+        id_user_jira,
+        name_user_jira,
+        email_user_jira,
+        name_tag_jira,
+        list_ids_epics_jira,
+    ) = get_jira_data()
 
     ids, summaries_jira, descriptions_jira, date, id_status, name_status, id_user, name_user, email_user, name_tag,list_ids_epics = get_jira_data()
 
