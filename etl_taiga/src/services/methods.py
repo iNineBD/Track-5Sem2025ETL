@@ -2,6 +2,8 @@
 """
 Methods module for database operations.
 """
+import os
+
 from prefect.cache_policies import NO_CACHE
 
 from etl_taiga.models import (
@@ -21,9 +23,12 @@ from peewee import *
 import pandas as pd
 import logging
 from prefect import task
+from dotenv import load_dotenv
 
+load_dotenv()
 db = database_config()
 db_open = connect_database(db)
+DB_SCHEMA = os.getenv("DB_SCHEMA")
 
 
 @task(cache_policy=NO_CACHE)
@@ -43,7 +48,7 @@ def delete_all_data(db_open):
         DimMinute,
         DimMonth,
         DimYear,
-        DimPlatform.DimPlatform
+        DimPlatform.DimPlatform,
     ]
 
     tables_to_create = [
@@ -65,7 +70,7 @@ def delete_all_data(db_open):
         with db_open.atomic():
             db.execute_sql("SET session_replication_role = replica;")
             db.execute_sql(
-                "DELETE FROM dw_track_develop.dim_user WHERE password IS NULL"
+                "DELETE FROM DB_SCHEMA.dim_user WHERE password IS NULL"
             )
             db.drop_tables(tables_to_drop, safe=True, cascade=True)
             db.create_tables(tables_to_create, safe=True)
