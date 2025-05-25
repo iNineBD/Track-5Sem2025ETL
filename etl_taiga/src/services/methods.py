@@ -3,19 +3,36 @@
 Methods module for database operations.
 """
 import logging
-
+import os
+from prefect.cache_policies import NO_CACHE
+from etl_taiga.models import (
+    DimProject,
+    DimCard,
+    DimRole,
+    DimUser,
+    DimTag,
+    DimStatus,
+    FatoCard,
+    DimTime,
+    DimPlatform
+)
+from etl_taiga.models.Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
+from etl_taiga.db.Connection import connect_database, database_config
+from peewee import *
 import pandas as pd
 from peewee import Model, OperationalError, chunked
 from prefect import task
 from prefect.cache_policies import NO_CACHE
-
 from etl_taiga.db.Connection import connect_database, database_config
 from etl_taiga.models import (DimCard, DimProject, DimRole, DimStatus, DimTag,
                               DimTime, DimUser, FatoCard)
 from etl_taiga.models.Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
+from dotenv import load_dotenv
 
+load_dotenv()
 db = database_config()
 db_open = connect_database(db)
+DB_SCHEMA = os.getenv("DB_SCHEMA")
 
 
 @task(cache_policy=NO_CACHE)
@@ -35,6 +52,7 @@ def delete_all_data(db_open):
         DimMinute,
         DimMonth,
         DimYear,
+        DimPlatform.DimPlatform,
     ]
 
     tables_to_create = [
@@ -45,6 +63,7 @@ def delete_all_data(db_open):
         DimHour,
         DimMinute,
         DimStatus.DimStatus,
+        DimPlatform.DimPlatform,
         DimProject.DimProject,
         DimTag.DimTag,
         DimTime.DimTime,
@@ -55,7 +74,7 @@ def delete_all_data(db_open):
         with db_open.atomic():
             db.execute_sql("SET session_replication_role = replica;")
             db.execute_sql(
-                "DELETE FROM dw_track_develop.dim_user WHERE password IS NULL"
+                "DELETE FROM DB_SCHEMA.dim_user WHERE password IS NULL"
             )
             db.drop_tables(tables_to_drop, safe=True, cascade=True)
             db.create_tables(tables_to_create, safe=True)
@@ -84,6 +103,7 @@ logger = logging.getLogger(__name__)
 def insert_data(
     db,
     df_fact_cards,
+    df_platform,
     df_projects,
     df_dim_cards,
     df_status,
@@ -107,6 +127,7 @@ def insert_data(
         (DimHour, df_dim_hour),
         (DimMinute, df_dim_minute),
         (DimStatus.DimStatus, df_status),
+        (DimPlatform.DimPlatform, df_platform),
         (DimProject.DimProject, df_projects),
         (DimTag.DimTag, df_tags),
         (DimTime.DimTime, df_dim_time),

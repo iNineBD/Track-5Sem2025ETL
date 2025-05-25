@@ -54,6 +54,7 @@ def run_etl_process():
 
         (
             fato_cards,
+            df_platform,
             df_projects,
             df_cards,
             df_status,
@@ -93,6 +94,7 @@ def run_etl_process():
         result = insert_data(
             db,
             fato_cards,
+            df_platform,
             df_projects,
             df_cards,
             df_status,
@@ -126,4 +128,5 @@ def run_etl_process():
 
 
 if __name__ == "__main__":
+    # run_etl_process()
     run_etl_process.serve(name="etl10min", schedule=schedule)
