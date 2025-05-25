@@ -2,27 +2,25 @@
 """
 Methods module for database operations.
 """
+import logging
 import os
-
+import pandas as pd
+from peewee import Model, OperationalError, chunked
+from prefect import task
 from prefect.cache_policies import NO_CACHE
-
+from etl_taiga.db.Connection import connect_database, database_config
 from etl_taiga.models import (
-    DimProject,
     DimCard,
+    DimProject,
     DimRole,
-    DimUser,
-    DimTag,
     DimStatus,
-    FatoCard,
+    DimTag,
     DimTime,
-    DimPlatform
+    DimUser,
+    FatoCard,
+    DimPlatform,
 )
 from etl_taiga.models.Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
-from etl_taiga.db.Connection import connect_database, database_config
-from peewee import *
-import pandas as pd
-import logging
-from prefect import task
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -69,9 +67,7 @@ def delete_all_data(db_open):
     try:
         with db_open.atomic():
             db.execute_sql("SET session_replication_role = replica;")
-            db.execute_sql(
-                "DELETE FROM DB_SCHEMA.dim_user WHERE password IS NULL"
-            )
+            db.execute_sql("DELETE FROM DB_SCHEMA.dim_user WHERE password IS NULL")
             db.drop_tables(tables_to_drop, safe=True, cascade=True)
             db.create_tables(tables_to_create, safe=True)
 
@@ -152,7 +148,7 @@ def insert_data(
                     df = df[~df["id_user"].isin(existing_ids_user)]
 
                 if df.empty:
-                    logger.info(f"Nenhum novo registro para inserir em Dim User")
+                    logger.info("Nenhum novo registro para inserir em Dim User")
                     results["tables"][model_class.__name__] = 0
                     continue
 
@@ -165,7 +161,7 @@ def insert_data(
                     df = df[~df["id_fato_card"].isin(existing_ids_fato)]
 
                 if df.empty:
-                    logger.info(f"Nenhum novo registro para inserir em FatoCard")
+                    logger.info("Nenhum novo registro para inserir em FatoCard")
                     results["tables"][model_class.__name__] = 0
                     continue
 

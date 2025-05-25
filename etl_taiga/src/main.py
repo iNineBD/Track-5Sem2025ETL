@@ -2,16 +2,16 @@
 Main module for the ETL pipeline.
 """
 
-from pendulum import interval
-
-#!/usr/bin/env python3
-from prefect.client.schemas.schedules import IntervalSchedule
 import logging
-from datetime import datetime
-from prefect import flow
-from datetime import timedelta
+from datetime import datetime, timedelta
 
-from etl_taiga.db.Connection import database_config, connect_database
+from pendulum import interval
+from prefect import flow
+
+# !/usr/bin/env python3
+from prefect.client.schemas.schedules import IntervalSchedule
+
+from etl_taiga.db.Connection import connect_database, database_config
 from etl_taiga.src.services.get_data import pipeline_main
 from etl_taiga.src.services.methods import delete_all_data, insert_data
 
@@ -46,8 +46,8 @@ def run_etl_process():
         logger.info("Starting data extraction and transformation...")
         start_time = datetime.now()
 
-        dataframes = pipeline_main()
-        logger.info(f"Data transformation completed in {datetime.now() - start_time}")
+        #        dataframes = pipeline_main()
+        #        logger.info(f"Data transformation completed in {datetime.now() - start_time}")
 
         # Step 3: Load data
         logger.info("Starting data loading...")
