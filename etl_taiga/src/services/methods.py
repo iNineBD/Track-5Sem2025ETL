@@ -4,28 +4,22 @@ Methods module for database operations.
 """
 import logging
 import os
-from prefect.cache_policies import NO_CACHE
-from etl_taiga.models import (
-    DimProject,
-    DimCard,
-    DimRole,
-    DimUser,
-    DimTag,
-    DimStatus,
-    FatoCard,
-    DimTime,
-    DimPlatform
-)
-from etl_taiga.models.Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
-from etl_taiga.db.Connection import connect_database, database_config
-from peewee import *
 import pandas as pd
 from peewee import Model, OperationalError, chunked
 from prefect import task
 from prefect.cache_policies import NO_CACHE
 from etl_taiga.db.Connection import connect_database, database_config
-from etl_taiga.models import (DimCard, DimProject, DimRole, DimStatus, DimTag,
-                              DimTime, DimUser, FatoCard)
+from etl_taiga.models import (
+    DimCard,
+    DimProject,
+    DimRole,
+    DimStatus,
+    DimTag,
+    DimTime,
+    DimUser,
+    FatoCard,
+    DimPlatform,
+)
 from etl_taiga.models.Date import DimDay, DimHour, DimMinute, DimMonth, DimYear
 from dotenv import load_dotenv
 
@@ -33,7 +27,6 @@ load_dotenv()
 db = database_config()
 db_open = connect_database(db)
 DB_SCHEMA = os.getenv("DB_SCHEMA")
-
 
 @task(cache_policy=NO_CACHE)
 def delete_all_data(db_open):
@@ -73,9 +66,7 @@ def delete_all_data(db_open):
     try:
         with db_open.atomic():
             db.execute_sql("SET session_replication_role = replica;")
-            db.execute_sql(
-                "DELETE FROM DB_SCHEMA.dim_user WHERE password IS NULL"
-            )
+            db.execute_sql("DELETE FROM DB_SCHEMA.dim_user WHERE password IS NULL")
             db.drop_tables(tables_to_drop, safe=True, cascade=True)
             db.create_tables(tables_to_create, safe=True)
 
