@@ -4,20 +4,15 @@ Module for data extraction and transformation.
 
 import gc
 import os
-from unittest.mock import inplace
 import numpy as np
 import pandas as pd
 import requests
 from annotated_types.test_cases import cases
-from pandas.conftest import datetime64_dtype
-from pydantic.networks import email_validator
 from etl_taiga.src.services.auth import auth_taiga
 from dotenv import load_dotenv
 from prefect import task, flow
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
-
-from etl_taiga.src.services.auth import auth_taiga
 
 load_dotenv()
 
