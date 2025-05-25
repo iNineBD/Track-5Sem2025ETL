@@ -28,6 +28,7 @@ db = database_config()
 db_open = connect_database(db)
 DB_SCHEMA = os.getenv("DB_SCHEMA")
 
+
 @task(cache_policy=NO_CACHE)
 def delete_all_data(db_open):
     """
