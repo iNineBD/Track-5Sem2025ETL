@@ -312,7 +312,6 @@ def pipeline_cards(id_projects):
         }
     )
     id_roles_jira1 = [9989571]
-    df_roles_jira = pd.DataFrame({"id": id_roles_jira1, "name": "Gestor"})
     df_tags_jira = pd.DataFrame(
         {"tags": name_tag_jira, "id": [i for i in range(1, len(name_tag_jira) + 1)]}
     )
