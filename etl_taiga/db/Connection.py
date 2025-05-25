@@ -1,11 +1,13 @@
 # %%
 import os
+
 from dotenv import load_dotenv
 from peewee import OperationalError, PostgresqlDatabase
+from prefect import task
 
 
+@task
 def database_config():
-
     load_dotenv()
 
     DB_USER = os.getenv("DB_USER")
@@ -20,6 +22,7 @@ def database_config():
     return db
 
 
+@task(cache_key_fn=None)  # desativa cache explicitamente
 def connect_database(db):
     try:
         db = database_config()

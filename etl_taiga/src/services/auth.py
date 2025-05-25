@@ -4,11 +4,11 @@ Module for authentication with Taiga API.
 """
 
 import os
+
 import requests
 from dotenv import load_dotenv
+from prefect import task
 from taiga import TaigaAPI
-
-# %%
 
 load_dotenv()
 
@@ -17,7 +17,7 @@ TAIGA_USER = os.getenv("TAIGA_USER")
 TAIGA_PASSWORD = os.getenv("TAIGA_PASSWORD")
 
 
-# %%
+@task
 def auth_taiga():
     """
     Authenticate with Taiga and return the token.
