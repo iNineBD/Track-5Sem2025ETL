@@ -623,7 +623,7 @@ def pipeline_transform(df_cards, df_status, df_users, df_roles):
     )
 
 
-@flow
+@task
 def pipeline_main():
     """
     Main function to run the ETL pipeline.
