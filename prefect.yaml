@@ -6,7 +6,7 @@ deployments:
   description: Main ETL process execution function.
   entrypoint: etl_taiga/src/main.py:run_etl_process
   work_pool:
-    name: etl-local
+    name: etl-taiga
   schedule:
     interval: 600.0
     timezone: America/Sao_Paulo
