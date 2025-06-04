@@ -67,7 +67,7 @@ def delete_all_data(db_open):
     try:
         with db_open.atomic():
             db.execute_sql("SET session_replication_role = replica;")
-            db.execute_sql("DELETE FROM DB_SCHEMA.dim_user WHERE password IS NULL")
+            db.execute_sql(f"DELETE FROM {DB_SCHEMA}.dim_user WHERE password IS NULL")
             db.drop_tables(tables_to_drop, safe=True, cascade=True)
             db.create_tables(tables_to_create, safe=True)
 
