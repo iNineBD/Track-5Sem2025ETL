@@ -1,0 +1,17 @@
+name: etl-taiga-project
+prefect-version: 3.4.1
+
+deployments:
+- name: etl-taiga-deployment
+  description: Main ETL process execution function.
+  entrypoint: etl_taiga/src/main.py:run_etl_process
+  work_pool:
+    name: etl-local
+  schedule:
+    interval: 600.0
+    timezone: America/Sao_Paulo
+    active: true
+  tags:
+    - production
+    - taiga
+    - etl
