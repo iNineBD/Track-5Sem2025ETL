@@ -179,7 +179,7 @@ def pipeline_cards(id_projects):
                     textos = block.get("content", [])
                     if any(t.get("text", "").strip() == "🎯 Objetivo:" for t in textos):
                         # Pega o parágrafo seguinte
-                        for next_block in content[i + 1 :]:
+                        for next_block in content[i + 1:]:
                             if next_block.get("type") == "paragraph":
                                 description = " ".join(
                                     t.get("text", "")
@@ -194,7 +194,7 @@ def pipeline_cards(id_projects):
                     for j, t in enumerate(texts):
                         if t.get("text", "").strip() == "Objetivo:":
                             # Junta os textos após "Objetivo:"
-                            following_texts = texts[j + 2 :]  # pula o hardBreak
+                            following_texts = texts[j + 2:]  # pula o hardBreak
                             description = " ".join(
                                 t.get("text", "")
                                 for t in following_texts
