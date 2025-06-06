@@ -5,8 +5,8 @@ Main module for the ETL pipeline.
 import logging
 from datetime import datetime, timedelta
 
-from pendulum import interval
 from prefect import flow
+
 # !/usr/bin/env python3
 from prefect.client.schemas.schedules import IntervalSchedule
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 schedule = IntervalSchedule(interval=timedelta(minutes=10))
 
 
-@flow(name="etl_automatizado")
+@flow
 def run_etl_process():
     """
     Main ETL process execution function.
@@ -54,6 +54,7 @@ def run_etl_process():
 
         (
             fato_cards,
+            df_platform,
             df_projects,
             df_cards,
             df_status,
@@ -93,6 +94,7 @@ def run_etl_process():
         result = insert_data(
             db,
             fato_cards,
+            df_platform,
             df_projects,
             df_cards,
             df_status,
@@ -126,4 +128,5 @@ def run_etl_process():
 
 
 if __name__ == "__main__":
+    # run_etl_process() - descomente para rodar o ETL localmente sem automação
     run_etl_process.serve(name="etl10min", schedule=schedule)

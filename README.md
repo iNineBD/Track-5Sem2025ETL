@@ -35,6 +35,32 @@ pip install -r requirements.txt
 
 After running the ETL pipeline, the processed data will be available in the PostgreSQL database specified in the `.env` file.
 
+```bash
+DB_HOST=localhost
+DB_DATABASE=projeto_tarefas
+DB_SCHEMA=public
+DB_PORT=5432
+DB_USER=admin
+DB_PASSWORD=senha123
+
+TAIGA_HOST=https://taiga.example.com
+TAIGA_USER=taiga_admin
+TAIGA_PASSWORD=taiga_pass
+TAIGA_MEMBER=eduardo_f_paula
+
+JIRA_HOST=https://jira.example.com
+JIRA_USER=eduardo.jira
+JIRA_TOKEN=jiraToken123abcXYZ456
+
+EMAIL_EDUARDO=eduardo.fariasp@example.com
+EMAIL_ANA=ana.silva@example.com
+EMAIL_LUCAS=lucas.rocha@example.com
+EMAIL_ANDRE=andre.martins@example.com
+EMAIL_ALI=ali.khan@example.com
+EMAIL_ALITA=alita.garcia@example.com
+EMAIL_WILLIAM=william.souza@example.com
+```
+
 ## Testing the Project
 
 Run the tests to ensure that the project is working correctly:
@@ -44,14 +70,41 @@ Runs the flake8 linter on the etl_taiga directory to check if the code follows P
 ```bash
 flake8 etl_taiga
 ```
-
+```bash
 Runs the tests and details the coverage in ```index.html``` in the "coverage_report" directory at the root of the project.
 Evaluate the report using the user's preferred browser
-
+```
 ```bash
 pytest --disable-warnings --cov=etl_taiga --cov-report=html:coverage_report --cov-report=xml:coverage_report/coverage.xml
 ```
 
-## Additional Information
 
-This project is part of an academic initiative and is tailored for educational purposes. Contributions and feedback are welcome!
+## Starting the Prefect Service
+
+This project uses a `prefect.yaml` file to configure and run the Prefect project.
+
+### Initialize the Prefect Project (if not already initialized)
+
+```bash
+prefect project init
+```
+
+This will create or update the `prefect.yaml` file.
+
+### Deploy the Flow with Prefect
+
+```bash
+prefect deploy --all
+```
+
+This will build and register all deployments defined in your `prefect.yaml`.
+
+### Start an Agent to Run the Flow
+
+```bash
+prefect agent start --pool default-agent-pool
+```
+
+> ⚠️ Replace `default-agent-pool` with the actual name of your agent pool if different.
+
+---
