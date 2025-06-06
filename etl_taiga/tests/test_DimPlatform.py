@@ -2,7 +2,7 @@ import pytest
 from peewee import SqliteDatabase
 
 from etl_taiga.models import BaseModel
-from etl_taiga.models.dim_platform import DimPlatform
+from etl_taiga.models.DimPlatform import DimPlatform
 
 # Criação de banco em memória
 test_db = SqliteDatabase(":memory:")

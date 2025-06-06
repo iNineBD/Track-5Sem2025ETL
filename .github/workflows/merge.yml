@@ -43,7 +43,10 @@ jobs:
       # Etapa 4: Executar testes e gerar o relatório de cobertura em XML (requerido pelo SonarCloud)
       - name: Run tests and generate coverage report
         run: |
-          pytest --cov=etl_taiga --cov-report=xml:coverage.xml
+          pytest etl_taiga/tests \                     # Executa os testes localizados no diretório 'etl_taiga/tests'
+                 --cov=etl_taiga \                     # Coleta cobertura do pacote 'etl_taiga'
+                 --cov-report=xml:coverage.xml \       # Gera o relatório de cobertura em formato XML (para o SonarCloud)
+                 --cov-report=term                     # Também exibe um resumo no terminal
 
       # Etapa 5: Garantir que o arquivo de cobertura foi gerado
       - name: Check coverage.xml existence

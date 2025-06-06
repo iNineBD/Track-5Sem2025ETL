@@ -44,7 +44,8 @@ jobs:
       # Etapa 6: Executar os testes com Pytest e gerar o relatório de cobertura em XML
       - name: Run tests with coverage
         run: |
-          pytest --cov=etl_taiga \                     # Coleta cobertura do pacote 'etl_taiga'
+          pytest etl_taiga/tests \                     # Executa os testes localizados no diretório 'etl_taiga/tests'
+                 --cov=etl_taiga \                     # Coleta cobertura do pacote 'etl_taiga'
                  --cov-report=xml:coverage.xml \       # Gera o relatório de cobertura em formato XML (para o SonarCloud)
                  --cov-report=term                     # Também exibe um resumo no terminal
 
