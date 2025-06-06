@@ -61,7 +61,6 @@ jobs:
             -Dsonar.exclusions=etl_taiga/tests/**
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.host.url=http://144.22.212.19:9001
-            -Dsonar.login=$SONAR_TOKEN
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR2_TOKEN }}  # Token do SonarQube armazenado nos GitHub Secrets
