@@ -14,7 +14,9 @@ jobs:
     steps:
       # Etapa 1: Clona o repositório na máquina runner
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Etapa 2: Configura o ambiente Python
       - name: Set up Python
@@ -29,20 +31,24 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel cython  # Atualiza pip e ferramentas de build
           pip install -r requirements.txt                              # Instala dependências do projeto
 
-      # Etapa 4: Executa o Flake8 para análise de estilo e linting
-      - name: Run Flake8 linting
-        run: |
-          flake8 etl_taiga           # Aponta para a pasta principal do projeto para validar estilo e erros
+      # Etapa 4: Define o PYTHONPATH corretamente para permitir importações do projeto
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
-      # Etapa 5: Executar testes e gerar relatório de cobertura em XML
+      # Etapa 5: Executa o Flake8 para análise de estilo e linting
+      - name: Run Flake8 linting
+        run: flake8 etl_taiga           # Aponta para a pasta principal do projeto para validar estilo e erros
+
+      # Etapa 6: Executar testes e gerar relatório de cobertura em XML
       - name: Run tests with coverage
         run: |
           pytest etl_taiga/tests \                     # Executa os testes localizados no diretório 'etl_taiga/tests'
                  --cov=etl_taiga \                     # Coleta cobertura do pacote 'etl_taiga'
                  --cov-report=xml:coverage.xml \       # Gera o relatório de cobertura em formato XML (para o SonarCloud)
                  --cov-report=term                     # Também exibe um resumo no terminal
+                 working-directory: ${{ github.workspace }}
 
-      # Etapa 6: Garantir que o arquivo de cobertura foi gerado
+      # Etapa 7: Garantir que o arquivo de cobertura foi gerado
       - name: Check coverage.xml existence
         run: |
           if [ ! -f coverage.xml ]; then
@@ -65,3 +71,4 @@ jobs:
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR2_TOKEN }}  # Token do SonarQube armazenado nos GitHub Secrets
+          working-directory: ${{ github.workspace }}

@@ -30,8 +30,8 @@ jobs:
       # Etapa 3: Instalar as dependências do projeto com pip
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip setuptools wheel cython  # Atualiza pip e ferramentas de build
+          pip install -r requirements.txt  
 
       # Etapa 4: Exibir os pacotes instalados para verificação
       - name: Verify dependencies installation
@@ -48,7 +48,8 @@ jobs:
                  --cov=etl_taiga \                     # Coleta cobertura do pacote 'etl_taiga'
                  --cov-report=xml:coverage.xml \       # Gera o relatório de cobertura em formato XML (para o SonarCloud)
                  --cov-report=term                     # Também exibe um resumo no terminal
-
+                 working-directory: ${{ github.workspace }}
+                 
       # Etapa 7: Verificar se o arquivo de cobertura foi realmente gerado
       - name: Check coverage.xml existence
         run: |
