@@ -1,58 +1,73 @@
+# Nome do workflow exibido na aba "Actions" do GitHub
 name: SonarCloud Analysis
 
+# Define os eventos que disparam esse workflow
 on:
   push:
     branches:
-      - main
+      - main                        # Só dispara quando houver push para a branch 'main'
     paths-ignore:
-      - '**.md'
-    # Executa somente se o push veio de merge de uma das branches sprint-1, sprint-2 ou sprint-3
-    # Isso é tratado na etapa de verificação do nome da branch anterior (ver abaixo)
-
+      - '**.md'                     
+      # Ignora mudanças em arquivos Markdown (ex: README.md)
+      # Observação: o comentário abaixo diz que este workflow será executado somente
+      # quando for feito merge de sprint-1, sprint-2 ou sprint-3 para main
+      # Essa lógica é tratada abaixo com o filtro `if:` baseado na mensagem do commit
 jobs:
   sonarcloud:
+    # Condição extra: só roda se o push for um merge commit vindo de uma das branches sprint-1, 2 ou 3
     if: startsWith(github.event.head_commit.message, 'Merge pull request') && (
           contains(github.event.head_commit.message, 'sprint-1') ||
           contains(github.event.head_commit.message, 'sprint-2') ||
           contains(github.event.head_commit.message, 'sprint-3')
         )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest   # Ambiente de execução: Ubuntu fornecido pelo GitHub
 
     steps:
+      # Etapa 1: Clonar o repositório na máquina runner
       - name: Checkout source code
         uses: actions/checkout@v4
 
+      # Etapa 2: Configurar o Python (versão 3.10)
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
+      # Etapa 3: Instalar dependências do projeto + pytest e cobertura
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov
 
+      # Etapa 4: Executar testes e gerar o relatório de cobertura em XML (requerido pelo SonarCloud)
       - name: Run tests and generate coverage report
         run: |
           pytest --cov=etl_taiga --cov-report=xml:coverage.xml
 
+      # Etapa 5: Garantir que o arquivo de cobertura foi gerado
+      - name: Check coverage.xml existence
+        run: |
+          if [ ! -f coverage.xml ]; then
+            echo "coverage.xml not found!"
+            exit 1
+          fi
+      
+      # Etapa 6: Executar a análise estática do código no SonarCloud
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v2
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # Token secreto de autenticação do SonarCloud
         with:
           args: >
-            -Dsonar.projectKey=iNineBD_Track-5Sem2025ETL
-            -Dsonar.organization=ininetrack
-            -Dsonar.projectName=Track-5Sem2025ETL
-            -Dsonar.projectVersion=1.0
-            -Dsonar.sources=etl_taiga
-            -Dsonar.sourceEncoding=UTF-8
-            -Dsonar.python.coverage.reportPaths=coverage.xml
-            -Dsonar.exclusions=etl_taiga/tests/**
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-            -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.base=${{ github.base_ref }}
-            -Dsonar.verbose=true
+            -Dsonar.projectKey=iNineBD_Track-5Sem2025ETL          # Chave única do projeto no SonarCloud
+            -Dsonar.organization=ininetrack                       # Nome da organização no SonarCloud
+            -Dsonar.projectName=Track-5Sem2025ETL                 # Nome do projeto exibido no painel do SonarCloud
+            -Dsonar.projectVersion=1.0                            # Versão do projeto (opcional)
+            -Dsonar.sources=etl_taiga                             # Diretório onde está o código-fonte
+            -Dsonar.sourceEncoding=UTF-8                          # Codificação dos arquivos (UTF-8 é padrão)
+            -Dsonar.exclusions=etl_taiga/tests/**                 # Exclui os arquivos de teste da análise de qualidade
+            -Dsonar.python.coverage.reportPaths=coverage.xml      # Caminho do relatório de cobertura de testes
+            -Dsonar.host.url=https://sonarcloud.io                # URL do SonarCloud
+            -Dsonar.branch.name=main                              # Nome da branch analisada (usado para relatórios por branch)
+            -Dsonar.verbose=true                                  # Habilita saída detalhada no log
