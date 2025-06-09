@@ -39,7 +39,7 @@ jobs:
 
       # Etapa 5: Configurar a variável de ambiente PYTHONPATH com o diretório atual do projeto
       - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+        run: echo "PYTHONPATH=." >> $GITHUB_ENV
 
       - name: Debug workspace structure
         run: |
@@ -48,7 +48,7 @@ jobs:
 
       # Etapa 6: Executar os testes com Pytest e gerar o relatório de cobertura em XML
       - name: Run tests with coverage
-        run: pytest Track-5Sem2025ETL/etl_taiga/tests --cov=Track-5Sem2025ETL/etl_taiga --cov-report=xml:coverage.xml --cov-report=term
+        run: pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term 
         #  pytest .\                     # Executa os testes localizados no diretório 'etl_taiga/tests'
         #         --cov=etl_taiga \                     # Coleta cobertura do pacote 'etl_taiga'
         #         --cov-report=xml:coverage.xml \       # Gera o relatório de cobertura em formato XML (para o SonarCloud)
