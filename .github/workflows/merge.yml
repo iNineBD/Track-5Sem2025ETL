@@ -46,14 +46,20 @@ jobs:
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
+      - name: Debug workspace structure
+        run: |
+          echo "PWD: $(pwd)"
+          find . -type f
+
       # Etapa 5: Executar testes e gerar o relatório de cobertura em XML (requerido pelo SonarCloud)
       - name: Run tests with coverage
-        run: |
-          pytest etl_taiga/tests \                     # Executa os testes localizados no diretório 'etl_taiga/tests'
-                 --cov=etl_taiga \                     # Coleta cobertura do pacote 'etl_taiga'
-                 --cov-report=xml:coverage.xml \       # Gera o relatório de cobertura em formato XML (para o SonarCloud)
-                 --cov-report=term                     # Também exibe um resumo no terminal
-                 working-directory: ${{ github.workspace }}
+        run: pytest Track-5Sem2025ETL/etl_taiga/tests --cov=Track-5Sem2025ETL/etl_taiga --cov-report=xml:coverage.xml --cov-report=term
+          
+        # pytest .\                     # Executa os testes localizados no diretório 'etl_taiga/tests'
+        #         --cov=etl_taiga \                     # Coleta cobertura do pacote 'etl_taiga'
+        #         --cov-report=xml:coverage.xml \       # Gera o relatório de cobertura em formato XML (para o SonarCloud)
+        #         --cov-report=term                     # Também exibe um resumo no terminal
+        #  working-directory: ${{ github.workspace }}/Track-5Sem2025ETL
 
       # Etapa 6: Garantir que o arquivo de cobertura foi gerado
       - name: Check coverage.xml existence
