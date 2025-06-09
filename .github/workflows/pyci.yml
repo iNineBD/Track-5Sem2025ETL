@@ -33,7 +33,7 @@ jobs:
 
       # Etapa 4: Define o PYTHONPATH corretamente para permitir importações do projeto
       - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+        run: echo "PYTHONPATH=." >> $GITHUB_ENV
 
       # Etapa 5: Executa o Flake8 para análise de estilo e linting
       - name: Run Flake8 linting
@@ -46,7 +46,8 @@ jobs:
 
       # Etapa 6: Executar testes e gerar relatório de cobertura em XML
       - name: Run tests with coverage
-        run: pytest Track-5Sem2025ETL/etl_taiga/tests --cov=Track-5Sem2025ETL/etl_taiga --cov-report=xml:coverage.xml --cov-report=term
+        run: pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term 
+         # pytest Track-5Sem2025ETL/etl_taiga/tests --cov=Track-5Sem2025ETL/etl_taiga --cov-report=xml:coverage.xml --cov-report=term
          # pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term
          # Executa os testes localizados no diretório 'etl_taiga/tests'
          # Coleta cobertura do pacote 'etl_taiga'
