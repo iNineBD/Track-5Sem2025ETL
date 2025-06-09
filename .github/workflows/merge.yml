@@ -44,7 +44,7 @@ jobs:
 
       # Etapa 4: Define o PYTHONPATH corretamente para permitir importações do projeto
       - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+        run: echo "PYTHONPATH=." >> $GITHUB_ENV
 
       - name: Debug workspace structure
         run: |
@@ -53,7 +53,7 @@ jobs:
 
       # Etapa 5: Executar testes e gerar o relatório de cobertura em XML (requerido pelo SonarCloud)
       - name: Run tests with coverage
-        run: pytest Track-5Sem2025ETL/etl_taiga/tests --cov=Track-5Sem2025ETL/etl_taiga --cov-report=xml:coverage.xml --cov-report=term
+        run: pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term 
           
         # pytest .\                     # Executa os testes localizados no diretório 'etl_taiga/tests'
         #         --cov=etl_taiga \                     # Coleta cobertura do pacote 'etl_taiga'
@@ -76,14 +76,14 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # Token secreto de autenticação do SonarCloud
         with:
           args: >
-            -Dsonar.projectKey=iNineBD_Track-5Sem2025ETL          # Chave única do projeto no SonarCloud
-            -Dsonar.organization=ininetrack                       # Nome da organização no SonarCloud
-            -Dsonar.projectName=Track-5Sem2025ETL                 # Nome do projeto exibido no painel do SonarCloud
-            -Dsonar.projectVersion=1.0                            # Versão do projeto (opcional)
-            -Dsonar.sources=etl_taiga                             # Diretório onde está o código-fonte
-            -Dsonar.sourceEncoding=UTF-8                          # Codificação dos arquivos (UTF-8 é padrão)
-            -Dsonar.exclusions=etl_taiga/tests/**                 # Exclui os arquivos de teste da análise de qualidade
-            -Dsonar.python.coverage.reportPaths=coverage.xml      # Caminho do relatório de cobertura de testes
-            -Dsonar.host.url=https://sonarcloud.io                # URL do SonarCloud
-            -Dsonar.branch.name=main                              # Nome da branch analisada (usado para relatórios por branch)
-            -Dsonar.verbose=true                                  # Habilita saída detalhada no log
+            -Dsonar.projectKey=iNineBD_Track-5Sem2025ETL
+            -Dsonar.organization=ininetrack
+            -Dsonar.projectName=Track-5Sem2025ETL
+            -Dsonar.projectVersion=1.0
+            -Dsonar.sources=etl_taiga
+            -Dsonar.sourceEncoding=UTF-8 
+            -Dsonar.exclusions=etl_taiga/tests/**
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.branch.name=main
+            -Dsonar.verbose=true

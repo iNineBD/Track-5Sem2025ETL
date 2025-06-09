@@ -70,16 +70,16 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}      # Token de autenticação armazenado em GitHub Secrets
         with:
           args: >
-            -Dsonar.projectKey=iNineBD_Track-5Sem2025ETL       # Chave única do projeto no SonarCloud
-            -Dsonar.organization=ininetrack                    # Organização no SonarCloud
-            -Dsonar.projectName=Track-5Sem2025ETL              # Nome do projeto exibido no painel
-            -Dsonar.projectVersion=1.0                         # Versão do projeto (opcional)
-            -Dsonar.sources=etl_taiga                          # Diretório onde está o código-fonte a ser analisado
-            -Dsonar.sourceEncoding=UTF-8                       # Codificação dos arquivos (UTF-8 padrão)
-            -Dsonar.exclusions=etl_taiga/tests/**              # Exclui os testes da análise de qualidade
-            -Dsonar.python.coverage.reportPaths=coverage.xml   # Caminho para o relatório de cobertura de testes
-            -Dsonar.host.url=https://sonarcloud.io             # URL da instância do SonarCloud
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}   # Número do PR (para integração com Sonar PR decoration)
-            -Dsonar.pullrequest.branch=${{ github.head_ref }}                 # Nome da branch do PR
-            -Dsonar.pullrequest.base=${{ github.base_ref }}                   # Branch de destino do PR (ex: main)
-            -Dsonar.verbose=true                                              # Ativa log detalhado da análise
+            -Dsonar.projectKey=iNineBD_Track-5Sem2025ETL
+            -Dsonar.organization=ininetrack
+            -Dsonar.projectName=Track-5Sem2025ETL
+            -Dsonar.projectVersion=1.0
+            -Dsonar.sources=etl_taiga
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.exclusions=etl_taiga/tests/**
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
+            -Dsonar.verbose=true
