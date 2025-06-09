@@ -1,29 +1,80 @@
+# Nome do workflow como será exibido no GitHub Actions
 name: Python Linting
 
+# Gatilhos que iniciam o workflow
 on:
-    push:
-      branches:
-          - '**'  # roda em todos os pushs para qualquer branch.
+  push:
+    branches:
+      - '**'        # Aciona o workflow em qualquer push para qualquer branch (main, dev, sprint-1, etc.)
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
+  lint:             # Nome do job
+    runs-on: ubuntu-latest  # Usa a imagem mais recente do Ubuntu como ambiente
 
     steps:
-      - name: Check out repository # Clona o repositório na máquina runner
-        uses: actions/checkout@v3
+      # Etapa 1: Clona o repositório na máquina runner
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
+      # Etapa 2: Configura o ambiente Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10" # Definindo a versão do Python para 3.10
-          cache: "pip" # Habilitando o cache do pip para acelerar as instalações de dependências
+          python-version: "3.10"  # Usa o Python 3.10
+          cache: "pip"            # Ativa cache do pip para acelerar execuções futuras
 
-      - name: Install dependencies # Instalando todos os pacotes necessários usando lista do repositório.
+      # Etapa 3: Instala dependências listadas no requirements.txt
+      - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel cython
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip setuptools wheel cython  # Atualiza pip e ferramentas de build
+          pip install -r requirements.txt                              # Instala dependências do projeto
 
-      - name: Run Flake8 linting # Executa Flake8 para linting no código do projeto
+      # Etapa 4: Define o PYTHONPATH corretamente para permitir importações do projeto
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=." >> $GITHUB_ENV
+
+      # Etapa 5: Executa o Flake8 para análise de estilo e linting
+      - name: Run Flake8 linting
+        run: flake8 etl_taiga           # Aponta para a pasta principal do projeto para validar estilo e erros
+
+      - name: Debug workspace structure
         run: |
-          flake8 etl_taiga
+          echo "PWD: $(pwd)"
+          find . -type f
+
+      # Etapa 6: Executar testes e gerar relatório de cobertura em XML
+      - name: Run tests with coverage
+        run: pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term 
+         # pytest Track-5Sem2025ETL/etl_taiga/tests --cov=Track-5Sem2025ETL/etl_taiga --cov-report=xml:coverage.xml --cov-report=term
+         # pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term
+         # Executa os testes localizados no diretório 'etl_taiga/tests'
+         # Coleta cobertura do pacote 'etl_taiga'
+         # Gera o relatório de cobertura em formato XML (para o SonarCloud)
+         # Também exibe um resumo no terminal
+
+      # Etapa 7: Garantir que o arquivo de cobertura foi gerado
+      - name: Check coverage.xml existence
+        run: |
+          if [ ! -f coverage.xml ]; then
+            echo "coverage.xml not found!"
+            exit 1
+          fi
+
+      # Etapa 7: Análise com SonarQube (comunidade, instância self-hosted)
+      - name: SonarQube Scan (Self-Hosted)
+        uses: SonarSource/sonarqube-scan-action@v2
+        with:
+          args: >
+            -Dsonar.projectKey=Track-5Sem2025ETL
+            -Dsonar.projectName=Track-5Sem2025ETL
+            -Dsonar.sources=etl_taiga
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.exclusions=etl_taiga/tests/**
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.host.url=http://144.22.212.19:9001
+            -Dsonar.verbose=true
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR2_TOKEN }}  # Token do SonarQube armazenado nos GitHub Secrets
+          working-directory: ${{ github.workspace }}

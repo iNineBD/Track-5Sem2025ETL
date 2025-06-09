@@ -1,56 +1,73 @@
+# Nome do workflow que será exibido no GitHub Actions
 name: Python ETL CI with SonarCloud
 
+# Define os gatilhos que iniciam o workflow:
 on:
   push:
-    branches: [main, sprint-1, sprint-2, sprint-3]
+    branches: [main, sprint-1, sprint-2, sprint-3]  # Quando houver push nessas branches
   pull_request:
-    branches: [main, sprint-1, sprint-2, sprint-3]
+    branches: [main, sprint-1, sprint-2, sprint-3]  # Ou abertura/atualização de PR com destino a essas branches
 
 jobs:
   build-and-test:
-    name: Build, Test & Sonar
-    runs-on: ubuntu-latest
+    name: Build, Test & Sonar  # Nome do job no painel do GitHub Actions
+    runs-on: ubuntu-latest     # Runner hospedado no Ubuntu mais recente
 
     steps:
-      - name: Checkout repository # Clona o repositório com histórico completo para análise
+      # Etapa 1: Clonar o repositório completo (com histórico completo para que o SonarCloud funcione corretamente)
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # necessário para análise completa do Git e SonarCloud
+          fetch-depth: 0  # Clona todo o histórico do Git, necessário para o Sonar analisar corretamente o histórico de código
 
+      # Etapa 2: Configurar o Python (a versão 3.10 é usada aqui)
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10" # Definindo a versão do Python para 3.10
-          cache: "pip" # Habilitando o cache do pip para acelerar as instalações de dependências
+          python-version: "3.10"  # Define a versão do Python a ser usada
+          cache: "pip"            # Habilita o cache para pacotes instalados com pip, acelerando execuções futuras
 
-      - name: Install dependencies # Instala as dependências do projeto
+      # Etapa 3: Instalar as dependências do projeto com pip
+      - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip setuptools wheel cython  # Atualiza pip e ferramentas de build
+          pip install -r requirements.txt  
 
+      # Etapa 4: Exibir os pacotes instalados para verificação
       - name: Verify dependencies installation
         run: pip list
 
-      - name: Set PYTHONPATH # Define o PYTHONPATH para incluir o diretório raiz do projeto
-        run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+      # Etapa 5: Configurar a variável de ambiente PYTHONPATH com o diretório atual do projeto
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=." >> $GITHUB_ENV
 
-      - name: Run tests with coverage # Executa Pytest e gera relatório de cobertura em XML (para SonarCloud)
+      - name: Debug workspace structure
         run: |
-          pytest --cov=etl_taiga \
-                 --cov-report=xml:coverage.xml \
-                 --cov-report=term
+          echo "PWD: $(pwd)"
+          find . -type f
 
-      - name: Check coverage.xml existence # Para garantir que o arquivo foi mesmo gerado
+      # Etapa 6: Executar os testes com Pytest e gerar o relatório de cobertura em XML
+      - name: Run tests with coverage
+        run: pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term 
+        #  pytest .\                     # Executa os testes localizados no diretório 'etl_taiga/tests'
+        #         --cov=etl_taiga \                     # Coleta cobertura do pacote 'etl_taiga'
+        #         --cov-report=xml:coverage.xml \       # Gera o relatório de cobertura em formato XML (para o SonarCloud)
+        #         --cov-report=term                     # Também exibe um resumo no terminal
+        #  working-directory: ${{ github.workspace }}/Track-5Sem2025ETL
+                 
+      # Etapa 7: Verificar se o arquivo de cobertura foi realmente gerado
+      - name: Check coverage.xml existence
         run: |
-          if [ ! -f coverage.xml ]; then
+          if [ ! -f coverage.xml ]; then               # Se o arquivo não existir, falha a execução
             echo "coverage.xml not found!"
             exit 1
           fi
 
+      # Etapa 8: Executar a análise estática do código no SonarCloud
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v2
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}      # Token de autenticação armazenado em GitHub Secrets
         with:
           args: >
             -Dsonar.projectKey=iNineBD_Track-5Sem2025ETL
@@ -59,8 +76,8 @@ jobs:
             -Dsonar.projectVersion=1.0
             -Dsonar.sources=etl_taiga
             -Dsonar.sourceEncoding=UTF-8
-            -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.exclusions=etl_taiga/tests/**
+            -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
