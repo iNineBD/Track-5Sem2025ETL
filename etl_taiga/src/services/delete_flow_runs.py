@@ -1,11 +1,12 @@
 import asyncio
 from prefect.client.orchestration import get_client
 
+
 async def delete_all_flow_runs():
     async with get_client() as client:
         print("Buscando flow runs...")
         flow_runs = await client.read_flow_runs()
-        
+
         if not flow_runs:
             print("Nenhum flow run encontrado.")
             return
