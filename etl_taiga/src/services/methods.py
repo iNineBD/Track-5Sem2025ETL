@@ -115,61 +115,154 @@ def insert_data(
         (DimUser.DimUser, df_users),
         (DimYear, df_dim_year),
         (DimMonth, df_dim_month),
-        (DimDay, df_dim_day),
+        (DimDay, df_dim_day),  # Até aqui é a fase 1 (inserir dias)
         (DimHour, df_dim_hour),
         (DimMinute, df_dim_minute),
         (DimStatus.DimStatus, df_status),
         (DimPlatform.DimPlatform, df_platform),
         (DimProject.DimProject, df_projects),
         (DimTag.DimTag, df_tags),
-        (DimTime.DimTime, df_dim_time),
+        (DimTime.DimTime, df_dim_time),  # DimTime depende de DimDay
         (DimCard.DimCard, df_dim_cards),
         (FatoCard.FatoCard, df_fact_cards),
     ]
 
     results = {"tables": {}, "status": "success", "total": 0}
 
+    # coloque o numero 31 onde o day for NaN
+    df_dim_day["day"] = df_dim_day["day"].fillna(31).astype(int)
+    df_dim_hour['hour'] = df_dim_hour['hour'].fillna(0).astype(int)
+    df_dim_minute['minute'] = df_dim_minute['minute'].fillna(0).astype(int)
+    df_dim_month['month'] = df_dim_month['month'].fillna(6).astype(int)
+    df_dim_year['year'] = df_dim_year['year'].fillna(2025).astype(int)
+
+    def clean_record(record):
+        for key, value in record.items():
+            if isinstance(value, float):
+                if pd.isna(value):
+                    record[key] = None
+                elif value.is_integer():
+                    record[key] = int(value)
+        return record
+
     try:
-        # Processar cada inserção na ordem correta
+        # 1ª fase: inserir até DimDay (inclusive)
         for model_class, df in insertion_sequence:
+            # Parar após inserir DimDay
+            if model_class == DimHour:
+                break
+
             if df is None or df.empty:
-                logger.warning(
-                    f"DataFrame para {model_class.__name__} esta vazio ou nulo"
-                )
-                results[model_class.__name__] = 0
+                logger.warning(f"DataFrame para {model_class.__name__} está vazio ou nulo")
+                results["tables"][model_class.__name__] = 0
                 continue
 
             if model_class == DimUser.DimUser:
-                existing_ids_user = {
-                    r.id_user for r in model_class.select(model_class.id_user)
-                }
-
+                existing_ids_user = {r.id_user for r in model_class.select(model_class.id_user)}
                 if "id_user" in df.columns:
                     df = df[~df["id_user"].isin(existing_ids_user)]
+                if df.empty:
+                    logger.info("Nenhum novo registro para inserir em Dim User")
+                    results["tables"][model_class.__name__] = 0
+                    continue
 
+            if model_class == DimDay and "day" in df.columns:
+                df = df.dropna(subset=["day"])
+
+            required_fields = {
+                "DimYear": ["year"],
+                "DimMonth": ["month"],
+                "DimDay": ["day"],
+                "DimHour": ["hour"],
+                "DimMinute": ["minute"],
+            }
+            required = required_fields.get(model_class.__name__, [])
+            for field in required:
+                if field in df.columns:
+                    before_count = len(df)
+                    df = df[df[field].notnull()]
+                    after_count = len(df)
+                    if before_count != after_count:
+                        logger.warning(f"{before_count - after_count} registros removidos com {field}=null para {model_class.__name__}")
+
+            data = [clean_record(r) for r in df.to_dict("records")]
+            inserted = 0
+
+            with db.atomic():
+                for batch in chunked(data, batch_size):
+
+                    model_class.insert_many(batch).execute()
+                    inserted += len(batch)
+
+            logger.info(f"Inseridos {inserted} registros em {model_class.__name__}")
+            results["tables"][model_class.__name__] = inserted
+            results["total"] += inserted
+
+        # Commit da 1ª fase para garantir DimDay salvo no banco
+        if not db.is_closed():
+            db.commit()
+
+        # 2ª fase: inserir o resto, incluindo DimTime
+        for model_class, df in insertion_sequence:
+            if model_class in [DimRole.DimRole, DimUser.DimUser, DimYear, DimMonth, DimDay]:
+                continue  # Já inserido
+
+            if df is None or df.empty:
+                logger.warning(f"DataFrame para {model_class.__name__} está vazio ou nulo")
+                results["tables"][model_class.__name__] = 0
+                continue
+
+            if model_class == DimUser.DimUser:
+                existing_ids_user = {r.id_user for r in model_class.select(model_class.id_user)}
+                if "id_user" in df.columns:
+                    df = df[~df["id_user"].isin(existing_ids_user)]
                 if df.empty:
                     logger.info("Nenhum novo registro para inserir em Dim User")
                     results["tables"][model_class.__name__] = 0
                     continue
 
             if model_class == FatoCard.FatoCard:
-                existing_ids_fato = {
-                    r.id_fato_card for r in model_class.select(model_class.id_fato_card)
-                }
-
+                existing_ids_fato = {r.id_fato_card for r in model_class.select(model_class.id_fato_card)}
                 if "id_fato_card" in df.columns:
                     df = df[~df["id_fato_card"].isin(existing_ids_fato)]
-
                 if df.empty:
                     logger.info("Nenhum novo registro para inserir em FatoCard")
                     results["tables"][model_class.__name__] = 0
                     continue
 
-            data = df.replace({pd.NA: None}).to_dict("records")
+            if model_class == DimTime and "id_day" in df.columns:
+                existing_day_ids = {r.id_day for r in DimDay.select(DimDay.id_day)}
+                df = df[df["id_day"].isin(existing_day_ids)]
+                if df.empty:
+                    logger.info("Nenhum novo registro válido para inserir em DimTime")
+                    results["tables"][model_class.__name__] = 0
+                    continue
+
+            required_fields = {
+                "DimYear": ["year"],
+                "DimMonth": ["month"],
+                "DimDay": ["day"],
+                "DimHour": ["hour"],
+                "DimMinute": ["minute"],
+            }
+            required = required_fields.get(model_class.__name__, [])
+            for field in required:
+                if field in df.columns:
+                    before_count = len(df)
+                    df = df[df[field].notnull()]
+                    after_count = len(df)
+                    if before_count != after_count:
+                        logger.warning(f"{before_count - after_count} registros removidos com {field}=null para {model_class.__name__}")
+
+            data = [clean_record(r) for r in df.to_dict("records")]
             inserted = 0
 
             with db.atomic():
                 for batch in chunked(data, batch_size):
+                    if model_class == DimYear:
+                        for record in batch:
+                            record["year"] = 2025
+
                     model_class.insert_many(batch).execute()
                     inserted += len(batch)
 
