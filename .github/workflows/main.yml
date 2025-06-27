@@ -58,7 +58,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: python-venv
-          path: .venv/
+          path: .
 
       - name: Unzip virtual environment
         run: |
@@ -91,7 +91,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: python-venv
-          path: .venv/
+          path: .
 
       - name: Set PYTHONPATH
         run: |
