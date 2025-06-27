@@ -28,15 +28,14 @@ jobs:
           pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
 
-      - name: Zip virtual environment
-        run: |
-          tar -czf .venv.tar.gz .venv
+      - name: Run Flake8 checks
+        run: flake8 etl_taiga/ --max-line-length=120 --exclude=.venv
 
       - name: Upload venv artifact
         uses: actions/upload-artifact@v4
         with:
           name: python-venv
-          path: .venv.tar.gz
+          path: .venv/
 
   unit_tests:
     name: Unit Tests with Coverage
@@ -57,15 +56,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: python-venv
-          path: .
+          path: .venv/
 
-      - name: Unzip virtual environment
+      - name: Set PYTHONPATH
         run: |
-          tar -xzf .venv.tar.gz
-          echo "PATH=$(pwd)/.venv/bin:$PATH" >> $GITHUB_ENV
+          echo "PATH=$(pwd)/.venv/bin/active:$PATH" >> $GITHUB_ENV
           echo "VIRTUAL_ENV=$(pwd)/.venv" >> $GITHUB_ENV
           echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
-
 
       - name: Run tests with coverage
         run: pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term
