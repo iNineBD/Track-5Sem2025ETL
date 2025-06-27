@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: validate-jira-commit-msg
+        name: "Valida mensagem de commit TRK-XXX"
+        language: system
+        entry: bash -c 'if ! grep -qE "^TRK-[0-9]+[[:space:]]-[[:space:]](feat|fix|release|hotfix):" "$1"; then echo "ERROR --> Commit fora do padrão TRK-XXX - feat|fix|release|hotfix:"; exit 1; fi'
+        args: [".git/COMMIT_EDITMSG"]
+        stages: [commit-msg]
