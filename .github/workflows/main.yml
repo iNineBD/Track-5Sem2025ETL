@@ -27,6 +27,7 @@ jobs:
           source .venv/bin/activate
           pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
+          pip install flake8
 
       - name: Run Flake8 checks
         run: flake8 etl_taiga/ --max-line-length=120 --exclude=.venv
