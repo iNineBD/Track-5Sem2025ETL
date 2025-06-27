@@ -1,85 +1,116 @@
-# Nome do workflow que será exibido no GitHub Actions
-name: Python ETL CI with SonarCloud
+name: Python CI - Test & Coverage to SonarCloud and SonarQube
 
-# Define os gatilhos que iniciam o workflow:
 on:
   push:
-    branches: [main, sprint-1, sprint-2, sprint-3]  # Quando houver push nessas branches
+    branches: ["**"]   # Executa em qualquer push
   pull_request:
-    branches: [main, sprint-1, sprint-2, sprint-3]  # Ou abertura/atualização de PR com destino a essas branches
+    branches: ["**"]   # Executa em qualquer PR
 
 jobs:
-  build-and-test:
-    name: Build, Test & Sonar  # Nome do job no painel do GitHub Actions
-    runs-on: ubuntu-latest     # Runner hospedado no Ubuntu mais recente
+  build:
+    name: Build & Install Dependencies
+    runs-on: ubuntu-latest
 
     steps:
-      # Etapa 1: Clonar o repositório completo (com histórico completo para que o SonarCloud funcione corretamente)
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Clona todo o histórico do Git, necessário para o Sonar analisar corretamente o histórico de código
 
-      # Etapa 2: Configurar o Python (a versão 3.10 é usada aqui)
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"  # Define a versão do Python a ser usada
-          cache: "pip"            # Habilita o cache para pacotes instalados com pip, acelerando execuções futuras
+          python-version: "3.10"
+          cache: "pip"
 
-      # Etapa 3: Instalar as dependências do projeto com pip
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel cython  # Atualiza pip e ferramentas de build
-          pip install -r requirements.txt  
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install flake8 pytest pytest-cov
 
-      # Etapa 4: Exibir os pacotes instalados para verificação
-      - name: Verify dependencies installation
-        run: pip list
+  unit_tests:
+    name: Unit Tests with Coverage
+    runs-on: ubuntu-latest
+    needs: build
 
-      # Etapa 5: Configurar a variável de ambiente PYTHONPATH com o diretório atual do projeto
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
       - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=." >> $GITHUB_ENV
+        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
-      - name: Debug workspace structure
-        run: |
-          echo "PWD: $(pwd)"
-          find . -type f
-
-      # Etapa 6: Executar os testes com Pytest e gerar o relatório de cobertura em XML
       - name: Run tests with coverage
-        run: pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term 
-        #  pytest .\                     # Executa os testes localizados no diretório 'etl_taiga/tests'
-        #         --cov=etl_taiga \                     # Coleta cobertura do pacote 'etl_taiga'
-        #         --cov-report=xml:coverage.xml \       # Gera o relatório de cobertura em formato XML (para o SonarCloud)
-        #         --cov-report=term                     # Também exibe um resumo no terminal
-        #  working-directory: ${{ github.workspace }}/Track-5Sem2025ETL
-                 
-      # Etapa 7: Verificar se o arquivo de cobertura foi realmente gerado
-      - name: Check coverage.xml existence
+        run: pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term
+
+      - name: Ensure coverage.xml exists
         run: |
-          if [ ! -f coverage.xml ]; then               # Se o arquivo não existir, falha a execução
+          if [ ! -f coverage.xml ]; then
             echo "coverage.xml not found!"
             exit 1
           fi
 
-      # Etapa 8: Executar a análise estática do código no SonarCloud
+  sonarcloud:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: unit_tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v2
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}      # Token de autenticação armazenado em GitHub Secrets
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=iNineBD_Track-5Sem2025ETL
             -Dsonar.organization=ininetrack
             -Dsonar.projectName=Track-5Sem2025ETL
-            -Dsonar.projectVersion=1.0
             -Dsonar.sources=etl_taiga
             -Dsonar.sourceEncoding=UTF-8
-            -Dsonar.exclusions=etl_taiga/tests/**
             -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.exclusions=etl_taiga/tests/**
             -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-            -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.base=${{ github.base_ref }}
+            -Dsonar.verbose=true
+
+  sonarqube:
+    name: SonarQube (Self-Hosted)
+    runs-on: ubuntu-latest
+    needs: unit_tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: SonarQube Scan (Self-hosted)
+        uses: SonarSource/sonarqube-scan-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR2_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=Track-5Sem2025ETL
+            -Dsonar.projectName=Track-5Sem2025ETL
+            -Dsonar.sources=etl_taiga
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.exclusions=etl_taiga/tests/**
+            -Dsonar.host.url=http://144.22.212.19:9001
             -Dsonar.verbose=true
