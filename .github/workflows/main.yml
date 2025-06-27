@@ -24,14 +24,13 @@ jobs:
       - name: Create and install dependencies in venv
         run: |
           python -m venv .venv
-          source .venv/bin/activate
+          . .venv/bin/activate
           pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
-          pip install flake8
+          pip install flake8 pytest pytest-cov
 
       - name: Zip virtual environment
-        run: |
-          tar -czf .venv.tar.gz .venv
+        run: tar -czf .venv.tar.gz .venv
 
       - name: Upload venv artifact
         uses: actions/upload-artifact@v4
@@ -63,14 +62,12 @@ jobs:
       - name: Unzip virtual environment
         run: |
           tar -xzf .venv.tar.gz
-          echo "PATH=$(pwd)/.venv/bin:$PATH" >> $GITHUB_ENV # Adiciona o bin do venv ao PATH
-          echo "VIRTUAL_ENV=$(pwd)/.venv" >> $GITHUB_ENV # Define VIRTUAL_ENV
-          echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV # Mantém o PYTHONPATH para o seu projeto
+          echo "$(pwd)/.venv/bin" >> $GITHUB_PATH
+          echo "VIRTUAL_ENV=$(pwd)/.venv" >> $GITHUB_ENV
+          echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
       - name: Run Flake8 checks
-        run: |
-          # Não precisa de 'source .venv/bin/activate' aqui pois o PATH já foi configurado
-          flake8 etl_taiga/ --exclude=.venv # Remova '--max-line-length=120' se não for necessário
+        run: flake8 etl_taiga/ --exclude=.venv
 
   unit_tests:
     name: Unit Tests with Coverage
@@ -95,7 +92,8 @@ jobs:
 
       - name: Set PYTHONPATH
         run: |
-          echo "PATH=$(pwd)/.venv/bin/active:$PATH" >> $GITHUB_ENV
+          tar -xzf .venv.tar.gz
+          echo "$(pwd)/.venv/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$(pwd)/.venv" >> $GITHUB_ENV
           echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
