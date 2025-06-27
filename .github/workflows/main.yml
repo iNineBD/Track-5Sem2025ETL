@@ -154,4 +154,3 @@ jobs:
             -Dsonar.exclusions=etl_taiga/tests/**
             -Dsonar.host.url=http://144.22.212.19:9001
             -Dsonar.verbose=true
-            
