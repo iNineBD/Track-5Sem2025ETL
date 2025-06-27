@@ -59,12 +59,15 @@ jobs:
           name: python-venv
           path: .
 
-      - name: Unzip virtual environment
+      - name: Unzip virtual environment and activate it
         run: |
           tar -xzf .venv.tar.gz
-          echo "$(pwd)/.venv/bin" >> $GITHUB_PATH
+          source .venv/bin/activate
+          which python
+          pip list
           echo "VIRTUAL_ENV=$(pwd)/.venv" >> $GITHUB_ENV
           echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+          echo "$(pwd)/.venv/bin" >> $GITHUB_PATH
 
       - name: Run Flake8 checks
         run: flake8 etl_taiga/ --exclude=.venv
