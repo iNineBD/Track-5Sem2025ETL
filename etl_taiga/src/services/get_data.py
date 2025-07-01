@@ -252,7 +252,7 @@ def pipeline_cards(id_projects):
                     email_user.append(email_ali)
                 case "Alita Amancio":
                     email_user.append(email_alita)
-                case "William David Antoniazzi":
+                case "William.txt David Antoniazzi":
                     email_user.append(email_william)
             name_tag.append(names_tags)
             list_ids_epics.append(epic_link.get("id"))

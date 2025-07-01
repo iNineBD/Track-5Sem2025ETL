@@ -128,5 +128,5 @@ def run_etl_process():
 
 
 if __name__ == "__main__":
-    # run_etl_process() - descomente para rodar o ETL localmente sem automação
-    run_etl_process.serve(name="etl10min", schedule=schedule)
+    run_etl_process()
+    # run_etl_process.serve(name="etl10min", schedule=schedule)
