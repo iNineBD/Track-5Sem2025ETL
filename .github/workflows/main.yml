@@ -151,7 +151,26 @@ jobs:
 
       - name: Git Pull on Remote Server
         run: |
+          TARGET_BRANCH="${{ github.ref_name }}"
+      
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd /app/Track-5Sem2025ETL
-            git pull origin $(git rev-parse --abbrev-ref HEAD)
+      
+            if [[ $(git status --porcelain) ]]; then
+              echo "Existem modificações locais não commitadas no repositório. Descartando-as para um deploy limpo."
+              git reset --hard HEAD
+              git clean -fd
+            fi
+      
+            git fetch origin
+      
+            if git checkout "$TARGET_BRANCH"; then
+              echo "Checkout para a branch $TARGET_BRANCH realizado com sucesso."
+            else
+              echo "A branch $TARGET_BRANCH não existe no repositório remoto. Criando e fazendo checkout dela."
+              git checkout -b "$TARGET_BRANCH" origin/"$TARGET_BRANCH"
+            fi
+      
+            git pull origin "$TARGET_BRANCH"
+            echo "Deploy concluído para a branch $TARGET_BRANCH."
           EOF

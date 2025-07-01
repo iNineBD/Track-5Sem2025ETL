@@ -1,0 +1,8 @@
+Mais um teste.
+
+        run: |
+          TARGET_BRANCH="${{ github.ref_name }}"
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /app/Track-5Sem2025ETL
+          # git pull origin $(git rev-parse --abbrev-ref HEAD)
+          EOF
