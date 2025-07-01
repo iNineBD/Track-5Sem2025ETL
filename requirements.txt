@@ -54,6 +54,7 @@ packaging==25.0
 pandas==2.2.3
 pathspec==0.12.1
 peewee==3.18.1
+pre-commit==4.2.0
 prefect==3.4.4
 prometheus_client==0.22.0
 psycopg2==2.9.10

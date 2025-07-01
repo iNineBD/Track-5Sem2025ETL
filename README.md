@@ -31,6 +31,16 @@ Install the project dependencies with the command:
 pip install -r requirements.txt
 ```
 
+## Standardization of git commit
+
+After cloning and installing the dependencies, it is necessary to activate the git commit standardization, file `.pre-commit-config.yaml`, follow with the commands:
+
+```bash
+mv .git/hooks/pre-commit.sample .git/hooks/pre-commit.sample.old
+
+pre-commit install --hook-type commit-msg --hook-type pre-commi
+```
+
 ## Accessing the Data
 
 After running the ETL pipeline, the processed data will be available in the PostgreSQL database specified in the `.env` file.
@@ -61,23 +71,22 @@ EMAIL_ALITA=alita.garcia@example.com
 EMAIL_WILLIAM=william.souza@example.com
 ```
 
-## Testing the Project
+## Lint to validate the code convention
 
-Run the tests to ensure that the project is working correctly:
-
-Runs the flake8 linter on the etl_taiga directory to check if the code follows Python style best practices (PEP8).
+Run the tests to ensure that the code is clean, identifiable and follows the correct convention.
+Run the flake8 linter in the etl_taiga directory to check that the code follows the Python Style Best Practices (PEP8).
 
 ```bash
 flake8 etl_taiga
 ```
-```bash
-Runs the tests and details the coverage in ```index.html``` in the "coverage_report" directory at the root of the project.
-Evaluate the report using the user's preferred browser
-```
-```bash
-pytest --disable-warnings --cov=etl_taiga --cov-report=html:coverage_report --cov-report=xml:coverage_report/coverage.xml
-```
 
+## Unit testing with code coverage
+
+Unit testing with code coverage
+
+```bash
+pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term
+```
 
 ## Starting the Prefect Service
 
