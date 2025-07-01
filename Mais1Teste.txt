@@ -6,3 +6,5 @@ Mais um teste.
             cd /app/Track-5Sem2025ETL
           # git pull origin $(git rev-parse --abbrev-ref HEAD)
           EOF
+
+ :/
