@@ -19,35 +19,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-          cache: "pip"
+          cache: "pip" # Ativa o cache de dependências
 
-      - name: Create and install dependencies in venv
+      - name: Install dependencies
         run: |
           python -m venv .venv
           . .venv/bin/activate
           pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
           pip install flake8 pytest pytest-cov
-        # Garante que essas libs estão no venv
-
-      - name: Configure Python paths for subsequent steps
-        run: |
-          echo "VIRTUAL_ENV=$(pwd)/.venv" >> $GITHUB_ENV
-          echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
-          echo "$(pwd)/.venv/bin" >> $GITHUB_PATH
 
       - name: Run Flake8 checks
         # O Flake8 por padrão busca o setup.cfg na raiz do projeto.
-        run: flake8 etl_taiga/ --exclude=.venv --config=setup.cfg
-
-      - name: Zip virtual environment
-        run: tar -czf .venv.tar.gz .venv
-
-      - name: Upload venv artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-venv
-          path: .venv.tar.gz
+        run: |
+          source .venv/bin/activate
+          flake8 etl_taiga/ --exclude=.venv --config=setup.cfg
 
   unit_tests:
     name: Unit Tests with Coverage
@@ -64,23 +50,18 @@ jobs:
           python-version: "3.10"
           cache: "pip"
 
-      - name: Download venv artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: python-venv
-          path: .
-
-      - name: Unzip virtual environment and activate it
+      - name: Install dependencies
         run: |
-          tar -xzf .venv.tar.gz
+          python -m venv .venv
           source .venv/bin/activate
-          # Re-configure Python paths, similar to build_and_lint for safety
-          echo "$(pwd)/.venv/bin" >> $GITHUB_PATH
-          echo "VIRTUAL_ENV=$(pwd)/.venv" >> $GITHUB_ENV
-          echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+          pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install pytest pytest-cov  
 
       - name: Run tests with coverage
-        run: pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term
+        run: |
+          source .venv/bin/activate
+          pytest etl_taiga/tests --cov=etl_taiga --cov-report=xml:coverage.xml --cov-report=term
 
       - name: Ensure coverage.xml exists
         run: |
@@ -102,12 +83,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-          cache: "pip"
 
       - name: Download coverage report
         uses: actions/download-artifact@v4
@@ -138,12 +113,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-          cache: "pip"
 
       - name: Download coverage report
         uses: actions/download-artifact@v4
