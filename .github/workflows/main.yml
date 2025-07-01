@@ -152,22 +152,18 @@ jobs:
         run: |
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Perform Git Operations on Remote Server # Define a variável TARGET_BRANCH com o nome da branch que disparou o workflow. Ex: 'main', 'develop', 'feature/123-minha-feature'
-        run: |
-          TARGET_BRANCH="${{ github.ref_name }}"
-
       - name: Git Pull on Remote Server # Inicia a conexão SSH com a sua máquina virtual na nuvem.
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
             cd /app/Track-5Sem2025ETL
             git fetch origin
-            if git checkout "$TARGET_BRANCH"; then
-              echo "Checkout para a branch $TARGET_BRANCH realizado com sucesso."
+            if git checkout "${{ github.ref_name }}"; then
+              echo "Checkout para a branch ${{ github.ref_name }} realizado com sucesso."
             else
-              echo "A branch $TARGET_BRANCH não existe localmente. Criando e fazendo checkout dela a partir de origin."
-              git checkout -b "$TARGET_BRANCH" "origin/$TARGET_BRANCH"
+              echo "A branch ${{ github.ref_name }} não existe localmente. Criando e fazendo checkout dela a partir de origin."
+              git checkout -b "${{ github.ref_name }}" "origin/${{ github.ref_name }}"
             fi
-            echo "Executando git pull origin $TARGET_BRANCH..."
-            git pull origin "$TARGET_BRANCH"
-            echo "Deploy concluído para a branch $TARGET_BRANCH na VM."
+            echo "Executando git pull origin ${{ github.ref_name }}..."
+            git pull origin "${{ github.ref_name }}"
+            echo "Deploy concluído para a branch ${{ github.ref_name }} na VM."
           EOF
