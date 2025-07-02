@@ -161,6 +161,7 @@ jobs:
 
       - name: Git Pull on Remote Server # Inicia a conexão SSH com a sua máquina virtual na nuvem.
         run: |
+          TARGET_BRANCH="${{ github.ref_name }}"
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
             cd /app/Track-5Sem2025ETL
             git fetch origin
@@ -173,4 +174,4 @@ jobs:
             echo "Executando git pull origin ${{ github.ref_name }}..."
             git pull origin "${{ github.ref_name }}"
             echo "Deploy concluído para a branch ${{ github.ref_name }} na VM."
-          EOFgi
+          EOF
